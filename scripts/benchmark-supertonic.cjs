@@ -14,8 +14,10 @@ const modelRoot = path.join(
   "sherpa-onnx-supertonic-3-tts-int8-2026-05-11",
 );
 const outputRoot = path.join(projectRoot, ".agent", "qa", "voice-candidates");
-const text =
-  "Done. I checked the files, fixed the conflict, and verified the result. Nothing was changed outside the approved scope.";
+const operatorMode = process.argv.includes("--operator");
+const text = operatorMode
+  ? "Understood. I will handle it. I will keep the explanation brief and show you the verified result when it is done."
+  : "Done. I checked the files, fixed the conflict, and verified the result. Nothing was changed outside the approved scope.";
 
 fs.mkdirSync(outputRoot, { recursive: true });
 const tts = new sherpa.OfflineTts({
@@ -36,18 +38,24 @@ const tts = new sherpa.OfflineTts({
 });
 
 const results = [];
-for (let sid = 0; sid < tts.numSpeakers; sid += 1) {
+const speakerIds = operatorMode
+  ? [1]
+  : Array.from({ length: tts.numSpeakers }, (_, index) => index);
+for (const sid of speakerIds) {
   const generationConfig = new sherpa.GenerationConfig({
     sid,
-    numSteps: 8,
-    speed: 0.96,
+    numSteps: operatorMode ? 10 : 8,
+    speed: operatorMode ? 0.92 : 0.96,
     extra: { lang: "en" },
   });
   const started = performance.now();
   const audio = tts.generate({ text, generationConfig });
   const elapsedSeconds = (performance.now() - started) / 1000;
   const durationSeconds = audio.samples.length / audio.sampleRate;
-  const outputPath = path.join(outputRoot, `supertonic-sid-${sid}.wav`);
+  const outputPath = path.join(
+    outputRoot,
+    operatorMode ? "operator-M2-hq.wav" : `supertonic-sid-${sid}.wav`,
+  );
   sherpa.writeWave(outputPath, {
     samples: audio.samples,
     sampleRate: audio.sampleRate,
@@ -67,6 +75,7 @@ console.log(
   JSON.stringify(
     {
       sampleRate: tts.sampleRate,
+      operatorMode,
       speakers: tts.numSpeakers,
       textCharacters: text.length,
       results,

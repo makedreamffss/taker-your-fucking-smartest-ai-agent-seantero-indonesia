@@ -34,6 +34,8 @@ test("Supertonic TTS sanitizes, synthesizes, and plays neural audio", async () =
   assert.equal(generated.length, 1);
   assert.equal(generated[0].text, "Result Done. code is in the report.");
   assert.equal(generated[0].enableExternalBuffer, false);
+  assert.equal(generated[0].generationConfig.sid, 1);
+  assert.equal(generated[0].generationConfig.numSteps, 10);
   assert.equal(played.length, 1);
   assert.equal(playbackStarted, 1);
 });

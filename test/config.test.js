@@ -14,6 +14,7 @@ test("configuration defaults to the requested Ollama cloud model", () => {
   assert.equal(config.workspace, workspace);
   assert.equal(config.approvalMode, "approval");
   assert.equal(config.commandTimeoutMs, 120_000);
+  assert.equal(config.voiceProfile, "M2");
 });
 
 test("configuration keeps its log path inside the workspace", () => {
@@ -37,5 +38,13 @@ test("configuration accepts only explicit approval modes", () => {
   assert.throws(
     () => loadConfig({ AGENT_APPROVAL_MODE: "unrestricted" }),
     /must be one of: approval, semi/,
+  );
+});
+
+test("configuration pins the operator voice to a named Supertonic profile", () => {
+  assert.equal(loadConfig({ AGENT_VOICE_PROFILE: "m3" }).voiceProfile, "M3");
+  assert.throws(
+    () => loadConfig({ AGENT_VOICE_PROFILE: "thanos" }),
+    /must be one of: M1, M2, M3, M4, M5, F1, F2, F3, F4, F5/,
   );
 });

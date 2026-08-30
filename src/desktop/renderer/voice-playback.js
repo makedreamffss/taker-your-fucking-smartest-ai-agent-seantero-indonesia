@@ -73,13 +73,34 @@ export class VoicePlayback {
     this.#pendingId = null;
 
     const source = context.createBufferSource();
+    const lowShelf = context.createBiquadFilter();
+    const presence = context.createBiquadFilter();
+    const compressor = context.createDynamicsCompressor();
     const analyser = context.createAnalyser();
     const gain = context.createGain();
+    lowShelf.type = "lowshelf";
+    lowShelf.frequency.value = 165;
+    lowShelf.gain.value = 4.5;
+    presence.type = "peaking";
+    presence.frequency.value = 3_100;
+    presence.Q.value = 0.72;
+    presence.gain.value = -1.4;
+    compressor.threshold.value = -21;
+    compressor.knee.value = 18;
+    compressor.ratio.value = 2.2;
+    compressor.attack.value = 0.008;
+    compressor.release.value = 0.24;
     analyser.fftSize = 256;
     analyser.smoothingTimeConstant = 0.45;
     gain.gain.value = 1;
     source.buffer = decoded;
-    source.connect(analyser).connect(gain).connect(context.destination);
+    source
+      .connect(lowShelf)
+      .connect(presence)
+      .connect(compressor)
+      .connect(analyser)
+      .connect(gain)
+      .connect(context.destination);
     const active = {
       id,
       source,

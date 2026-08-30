@@ -18,7 +18,7 @@
       "fileName": "ggml-base.bin",
       "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/98aa99a0a9db05ae2342309f5096248665f7cba3/ggml-base.bin",
       "sha256": "60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe",
-      "license": "MIT",
+      "license": "OpenRAIL-M",
       "languages": ["multilingual", "en", "id", "ms"],
       "sampleRate": 16000
     }

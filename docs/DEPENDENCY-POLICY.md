@@ -43,7 +43,7 @@ terminal agent core still uses Node built-ins.
 | whisper.cpp Windows x64 | v1.8.6 / commit 23ee035 | MIT | SHA-256 in assets/voice/manifest.json |
 | Whisper base multilingual | revision 98aa99a | MIT | SHA-256 in assets/voice/manifest.json |
 | Silero VAD v5 model | vad-web 0.0.30 package | MIT upstream | npm integrity plus generated build SHA-256 |
-| Supertonic 3 INT8 | 2026-05-11 | MIT | SHA-256 in assets/voice/manifest.json |
+| Supertonic 3 INT8 | 2026-05-11 | OpenRAIL-M | SHA-256 in assets/voice/manifest.json |
 
 The voice installer downloads into the ignored .agent directory, verifies the full
 SHA-256 before extraction/use, and re-verifies cached artifacts. The renderer build
@@ -56,7 +56,7 @@ contains no CDN fallback.
 |---|---|---|
 | Silero VAD | MIT | integrated; live microphone benchmark pending |
 | whisper.cpp | MIT | integrated and English fixture benchmarked |
-| sherpa-onnx + Supertonic 3 INT8 | Apache-2.0 + MIT | integrated and benchmarked |
+| sherpa-onnx + Supertonic 3 INT8 | Apache-2.0 + OpenRAIL-M | integrated and benchmarked |
 | Kokoro 82M | Apache-2.0 | English TTS candidate |
 | OHF Piper | GPL-3.0 | optional Indonesian TTS adapter |
 | Tesseract | Apache-2.0 | OCR baseline candidate |

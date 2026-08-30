@@ -1,4 +1,4 @@
-const MAX_SPEECH_CHARACTERS = 900;
+const MAX_SPEECH_CHARACTERS = 520;
 
 export function prepareSpeechText(value, { maxCharacters = MAX_SPEECH_CHARACTERS } = {}) {
   if (typeof value !== "string") return "";
@@ -24,8 +24,13 @@ export function prepareSpeechText(value, { maxCharacters = MAX_SPEECH_CHARACTERS
     .replace(/\s+/g, " ")
     .trim();
 
+  text = text.replace(
+    /^(?:(?:hey there|sure|absolutely|of course|happy to help)[!.:,;\s-]+)+/i,
+    "",
+  );
+
   if (text.length <= maxCharacters) return text;
-  const suffix = " The remaining details are in the transcript.";
+  const suffix = " The rest is in the transcript.";
   const boundary = Math.max(1, maxCharacters - suffix.length);
   const candidate = text.slice(0, boundary);
   const sentenceEnd = Math.max(

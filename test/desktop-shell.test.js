@@ -84,3 +84,14 @@ test("response surface parses and sanitizes Markdown without a raw HTML sink", a
   assert.doesNotMatch(script, /\.innerHTML\s*=/);
   assert.match(css, /\.card\s*\{[^}]*border-radius:\s*0/s);
 });
+
+test("voice playback applies the restrained operator mastering chain", async () => {
+  const script = await readFile(
+    new URL("../src/desktop/renderer/voice-playback.js", import.meta.url),
+    "utf8",
+  );
+  assert.match(script, /lowShelf\.type = "lowshelf"/);
+  assert.match(script, /lowShelf\.gain\.value = 4\.5/);
+  assert.match(script, /createDynamicsCompressor/);
+  assert.match(script, /presence\.gain\.value = -1\.4/);
+});

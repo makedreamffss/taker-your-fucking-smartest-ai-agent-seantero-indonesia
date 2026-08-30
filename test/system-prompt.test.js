@@ -12,3 +12,11 @@ test("system prompt does not disclose the machine-specific workspace path", () =
   assert.doesNotMatch(prompt, /C:\\Users\\/i);
   assert.match(prompt, /configured project workspace/i);
 });
+
+test("system prompt defines the restrained operator personality", () => {
+  const prompt = buildSystemPrompt();
+  assert.match(prompt, /restrained, dry, direct, and quietly formidable/i);
+  assert.match(prompt, /Work first and speak second/i);
+  assert.match(prompt, /Avoid filler such as/i);
+  assert.match(prompt, /Never perform confidence/i);
+});

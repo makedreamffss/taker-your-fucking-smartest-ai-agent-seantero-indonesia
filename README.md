@@ -103,6 +103,7 @@ machine.
 | `AGENT_REQUEST_TIMEOUT_MS` | `300000` | Ollama request timeout |
 | `AGENT_COMMAND_TIMEOUT_MS` | `120000` | Default shell-command timeout |
 | `AGENT_APPROVAL_MODE` | `approval` | Startup mode: `approval` or `semi` |
+| `AGENT_VOICE_PROFILE` | `M2` | Supertonic preset; M2 is the deep, grounded operator default |
 | `AGENT_LOG_PATH` | `.agent/logs/events.jsonl` | Metadata event log inside workspace |
 
 Example override for the current PowerShell session:

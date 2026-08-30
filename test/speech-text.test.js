@@ -21,7 +21,14 @@ test("speech text removes markup and code while preserving useful prose", () => 
 test("speech text declares when the visible transcript has more detail", () => {
   const result = prepareSpeechText("word ".repeat(300), { maxCharacters: 160 });
   assert.ok(result.length <= 160);
-  assert.match(result, /remaining details are in the transcript\.$/);
+  assert.match(result, /rest is in the transcript\.$/);
+});
+
+test("speech text removes customer-service filler from playback", () => {
+  assert.equal(
+    prepareSpeechText("Hey there! Absolutely, I checked it. The result is clean."),
+    "I checked it. The result is clean.",
+  );
 });
 
 test("speech segments are bounded without losing text", () => {

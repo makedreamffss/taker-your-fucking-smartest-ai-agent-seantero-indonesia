@@ -10,6 +10,19 @@ import {
 
 const require = createRequire(import.meta.url);
 
+export const SUPERTONIC_VOICE_PROFILES = Object.freeze({
+  M1: 0,
+  M2: 1,
+  M3: 2,
+  M4: 3,
+  M5: 4,
+  F1: 5,
+  F2: 6,
+  F3: 7,
+  F4: 8,
+  F5: 9,
+});
+
 export class SupertonicTts {
   #enginePromise = null;
   #sequence = 0;
@@ -18,9 +31,9 @@ export class SupertonicTts {
   constructor({
     modelDirectory,
     audioPlayer,
-    speakerId = 3,
-    speed = 0.96,
-    numSteps = 8,
+    voiceProfile = "M2",
+    speed = 0.92,
+    numSteps = 10,
     numThreads = 2,
     engineFactory = createSherpaEngine,
   } = {}) {
@@ -30,15 +43,18 @@ export class SupertonicTts {
     if (!audioPlayer || typeof audioPlayer.play !== "function" || typeof audioPlayer.stop !== "function") {
       throw new TypeError("SupertonicTts requires an audio player.");
     }
-    if (!Number.isInteger(speakerId) || speakerId < 0 || speakerId > 9) {
-      throw new RangeError("speakerId must be an integer from 0 through 9.");
+    const normalizedProfile = typeof voiceProfile === "string"
+      ? voiceProfile.toUpperCase()
+      : "";
+    if (!(normalizedProfile in SUPERTONIC_VOICE_PROFILES)) {
+      throw new RangeError("voiceProfile must be one of M1-M5 or F1-F5.");
     }
     if (typeof engineFactory !== "function") {
       throw new TypeError("engineFactory must be a function.");
     }
     this.modelDirectory = path.resolve(modelDirectory);
     this.audioPlayer = audioPlayer;
-    this.speakerId = speakerId;
+    this.voiceProfile = normalizedProfile;
     this.speed = speed;
     this.numSteps = numSteps;
     this.numThreads = numThreads;
@@ -126,7 +142,7 @@ export class SupertonicTts {
       text: segment,
       enableExternalBuffer: false,
       generationConfig: createGenerationConfig({
-        sid: this.speakerId,
+        sid: SUPERTONIC_VOICE_PROFILES[this.voiceProfile],
         speed: this.speed,
         numSteps: this.numSteps,
         lang: detectSpeechLanguage(fullText),

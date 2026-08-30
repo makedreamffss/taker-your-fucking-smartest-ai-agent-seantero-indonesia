@@ -74,7 +74,7 @@ Measured stack:
 - Silero VAD: MIT, small ONNX model, 8 kHz and 16 kHz support.
 - whisper.cpp: MIT, CPU-friendly C/C++ Whisper implementation with quantization.
 - sherpa-onnx 1.13.6: Apache-2.0, exact-pinned native Node runtime.
-- Supertonic 3 INT8: MIT-licensed distribution, ten included voices, 31-language support,
+- Supertonic 3 INT8: OpenRAIL-M model weights, ten included voices, 31-language support,
   and a 44.1 kHz output path. The upstream repository is archived, so the provider
   boundary and artifact manifest are mandatory exit conditions, not optional polish.
 - Kokoro 82M: Apache-2.0 alternative candidate for natural English speech.
@@ -98,8 +98,11 @@ Implemented evidence:
   from local built assets in a sandboxed hidden Electron smoke test.
 - Supertonic 3 INT8 synthesized the same 115-character operator response across all
   ten supplied voices on this machine. Real-time factors ranged from 0.413 to 0.559.
-  M4 is the initial restrained profile at 0.440 RTF; this is a measured engineering
-  default, not a claim that automated timing can judge subjective voice quality.
+  M2 is the selected operator profile because the official voice documentation
+  describes it as deep, robust, calm, composed, serious, and grounded. At ten
+  synthesis steps and 0.92 speed, the selected 113-character preview measured 0.468
+  RTF. Timing is an engineering measurement, not a claim that automation can judge
+  subjective fit.
 - The exact model archive is 128,774,318 bytes with SHA-256
   `82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427`.
 - Both Node and Electron-native synthesis smoke tests generate valid PCM WAVE output.

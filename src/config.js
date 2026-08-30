@@ -9,6 +9,7 @@ const DEFAULTS = Object.freeze({
   requestTimeoutMs: 300_000,
   commandTimeoutMs: 120_000,
   approvalMode: "approval",
+  voiceProfile: "M2",
   logPath: ".agent/logs/events.jsonl",
 });
 
@@ -54,6 +55,11 @@ export function loadConfig(env = process.env, cwd = process.cwd()) {
       env.AGENT_APPROVAL_MODE?.trim() || DEFAULTS.approvalMode,
       "AGENT_APPROVAL_MODE",
       ["approval", "semi"],
+    ),
+    voiceProfile: parseChoice(
+      env.AGENT_VOICE_PROFILE?.trim().toUpperCase() || DEFAULTS.voiceProfile,
+      "AGENT_VOICE_PROFILE",
+      ["M1", "M2", "M3", "M4", "M5", "F1", "F2", "F3", "F4", "F5"],
     ),
     logPath,
   });

@@ -250,9 +250,9 @@ function createVoiceRuntime(config) {
       "sherpa-onnx-supertonic-3-tts-int8-2026-05-11",
     ),
     audioPlayer: rendererAudioPlayer,
-    speakerId: 3,
-    speed: 0.96,
-    numSteps: 8,
+    voiceProfile: config.voiceProfile,
+    speed: 0.92,
+    numSteps: 10,
     numThreads: 2,
   });
   voice = new VoiceOrchestrator({
