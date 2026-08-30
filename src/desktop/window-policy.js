@@ -1,12 +1,12 @@
 export const PET_WINDOW_SIZE = Object.freeze({
-  width: 124,
-  height: 124,
+  width: 188,
+  height: 188,
   edgeInset: 18,
 });
 
 export const POPOVER_WINDOW_SIZE = Object.freeze({
-  width: 380,
-  height: 220,
+  width: 560,
+  height: 420,
   gap: 10,
 });
 

@@ -14,6 +14,9 @@ $modelRoot = Join-Path $runtimeRoot "models"
 $archivePath = Join-Path $downloadRoot "whisper-bin-x64.zip"
 $model = $manifest.sttModels | Where-Object id -eq "whisper-base-multilingual"
 $modelPath = Join-Path $modelRoot $model.fileName
+$ttsModel = $manifest.ttsModels | Where-Object id -eq "supertonic-3-int8"
+$ttsArchivePath = Join-Path $downloadRoot ($ttsModel.directoryName + ".tar.bz2")
+$ttsModelRoot = Join-Path $runtimeRoot $ttsModel.directoryName
 
 New-Item -ItemType Directory -Force -Path $runtimeRoot, $downloadRoot, $modelRoot |
   Out-Null
@@ -57,6 +60,7 @@ function Get-VerifiedArtifact {
 
 Get-VerifiedArtifact -Url $manifest.whisperCpp.archive.url -Destination $archivePath -ExpectedSha256 $manifest.whisperCpp.archive.sha256
 Get-VerifiedArtifact -Url $model.url -Destination $modelPath -ExpectedSha256 $model.sha256
+Get-VerifiedArtifact -Url $ttsModel.url -Destination $ttsArchivePath -ExpectedSha256 $ttsModel.sha256
 
 $cli = Get-ChildItem -LiteralPath $engineRoot -Filter "whisper-cli.exe" -Recurse -ErrorAction SilentlyContinue |
   Select-Object -First 1
@@ -89,6 +93,35 @@ if (-not $cli -or $Force) {
 $cli = Get-ChildItem -LiteralPath $engineRoot -Filter "whisper-cli.exe" -Recurse |
   Select-Object -First 1
 
+$ttsConfigPath = Join-Path $ttsModelRoot "tts.json"
+if (-not (Test-Path -LiteralPath $ttsConfigPath) -or $Force) {
+  $temporaryTtsInstall = Join-Path $runtimeRoot (
+    ".tts-install-" + [Guid]::NewGuid().ToString("N")
+  )
+  New-Item -ItemType Directory -Path $temporaryTtsInstall | Out-Null
+  try {
+    & tar.exe -xjf $ttsArchivePath -C $temporaryTtsInstall
+    if ($LASTEXITCODE -ne 0) {
+      throw "tar.exe failed while extracting the verified Supertonic archive."
+    }
+    $extractedConfig = Get-ChildItem -LiteralPath $temporaryTtsInstall -Filter "tts.json" -Recurse |
+      Select-Object -First 1
+    if (-not $extractedConfig) {
+      throw "The verified Supertonic archive did not contain tts.json."
+    }
+    $extractedRoot = $extractedConfig.Directory.FullName
+    if (Test-Path -LiteralPath $ttsModelRoot) {
+      Remove-Item -LiteralPath $ttsModelRoot -Recurse -Force
+    }
+    Move-Item -LiteralPath $extractedRoot -Destination $ttsModelRoot
+  }
+  finally {
+    if (Test-Path -LiteralPath $temporaryTtsInstall) {
+      Remove-Item -LiteralPath $temporaryTtsInstall -Recurse -Force
+    }
+  }
+}
+
 [pscustomobject]@{
   EngineVersion = $manifest.whisperCpp.version
   EngineCommit = $manifest.whisperCpp.commit
@@ -96,4 +129,8 @@ $cli = Get-ChildItem -LiteralPath $engineRoot -Filter "whisper-cli.exe" -Recurse
   ModelId = $model.id
   ModelPath = $modelPath
   ModelSha256 = (Get-FileHash -LiteralPath $modelPath -Algorithm SHA256).Hash.ToLowerInvariant()
+  TtsRuntime = $manifest.ttsRuntime.id + "@" + $manifest.ttsRuntime.version
+  TtsModelId = $ttsModel.id
+  TtsModelPath = $ttsModelRoot
+  TtsArchiveSha256 = (Get-FileHash -LiteralPath $ttsArchivePath -Algorithm SHA256).Hash.ToLowerInvariant()
 } | Format-List

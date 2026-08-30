@@ -165,6 +165,36 @@ test("a VAD provider failure stops capture and cancels active work", async () =>
   assert.deepEqual(errors, ["device disconnected"]);
 });
 
+test("explicit interruption stops speech without disabling listening", async () => {
+  const activityState = new ActivityStateStore({
+    initialState: { audioInput: "listening", audioOutput: "speaking" },
+  });
+  const stopReasons = [];
+  const interruptReasons = [];
+  const orchestrator = new VoiceOrchestrator({
+    session: {
+      activityState,
+      interrupt(reason) {
+        interruptReasons.push(reason);
+        return true;
+      },
+      send: async () => "",
+    },
+    vad: { start: async () => {}, stop: async () => {} },
+    stt: { transcribe: async () => "" },
+    tts: {
+      speak: async () => {},
+      stop: async (reason) => stopReasons.push(reason),
+    },
+  });
+
+  assert.equal(await orchestrator.interrupt("user_interruption"), true);
+  assert.equal(activityState.snapshot.audioInput, "listening");
+  assert.equal(activityState.snapshot.audioOutput, "silent");
+  assert.deepEqual(stopReasons, ["user_interruption"]);
+  assert.deepEqual(interruptReasons, ["user_interruption"]);
+});
+
 function createVad() {
   let callbacks;
   return {

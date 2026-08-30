@@ -15,6 +15,10 @@
     "doctor": "node src/cli.js --doctor",
     "voice:install": "pwsh -NoProfile -File scripts/install-voice-runtime.ps1",
     "voice:benchmark": "node scripts/benchmark-stt.mjs",
+    "voice:benchmark-tts": "node scripts/benchmark-supertonic.cjs",
+    "voice:smoke-tts": "node scripts/smoke-supertonic-node.mjs",
+    "voice:smoke-tts-electron": "electron scripts/smoke-supertonic-electron.mjs",
+    "character:smoke": "node scripts/smoke-character-render.mjs",
     "voice:smoke-vad": "npm run build:renderer && electron scripts/smoke-vad-runtime.mjs",
     "test": "node --test",
     "check": "node --check src/cli.js && node --check src/desktop/main.js && npm run build:renderer && node --test"
@@ -25,6 +29,10 @@
   },
   "dependencies": {
     "@ricky0123/vad-web": "0.0.30",
-    "onnxruntime-web": "1.29.0"
+    "dompurify": "3.4.14",
+    "marked": "18.0.11",
+    "onnxruntime-web": "1.29.0",
+    "sherpa-onnx-node": "1.13.6",
+    "sherpa-onnx-win-x64": "1.13.6"
   }
 }

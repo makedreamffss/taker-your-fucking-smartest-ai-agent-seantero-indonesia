@@ -1,5 +1,8 @@
 "use strict";
 
+import DOMPurify from "dompurify";
+import { marked } from "marked";
+
 const card = document.getElementById("card");
 const title = document.getElementById("title");
 const messageView = document.getElementById("message-view");
@@ -27,7 +30,7 @@ window.takerPopover.onView((view) => {
   approvalId = mode === "approval" ? safeText(view.id, "") : null;
 
   if (mode === "message") {
-    message.textContent = safeText(view.text, "");
+    renderMarkdown(message, safeText(view.text, ""));
   } else if (mode === "prompt") {
     prompt.value = "";
     prompt.placeholder = safeText(view.placeholder, "What should I do?");
@@ -50,6 +53,12 @@ promptView.addEventListener("submit", (event) => {
   event.preventDefault();
   window.takerPopover.submit({ type: "prompt", text: prompt.value });
 });
+prompt.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault();
+    promptView.requestSubmit();
+  }
+});
 approve.addEventListener("click", () => {
   window.takerPopover.submit({ type: "approve", id: approvalId });
 });
@@ -67,4 +76,24 @@ window.addEventListener("keydown", (event) => {
 
 function safeText(value, fallback) {
   return typeof value === "string" ? value : fallback;
+}
+
+function renderMarkdown(target, source) {
+  const html = marked.parse(source.replace(/[\u200B-\u200D\uFEFF]/g, ""), {
+    async: false,
+    breaks: true,
+    gfm: true,
+  });
+  const fragment = DOMPurify.sanitize(html, {
+    RETURN_DOM_FRAGMENT: true,
+    ALLOWED_TAGS: [
+      "p", "br", "strong", "em", "code", "pre", "ul", "ol", "li",
+      "h1", "h2", "h3", "blockquote", "hr", "table", "thead", "tbody",
+      "tr", "th", "td",
+    ],
+    ALLOWED_ATTR: [],
+    FORBID_TAGS: ["style", "script", "iframe", "object", "form", "svg", "math"],
+    FORBID_ATTR: ["style", "src", "href", "onerror", "onclick"],
+  });
+  target.replaceChildren(fragment);
 }

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self'; connect-src 'self'; worker-src 'self'; media-src 'self'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+      content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self'; connect-src 'self'; worker-src 'self'; media-src 'self' blob:; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
     >
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Taker Takeover</title>
@@ -18,49 +18,12 @@
       role="button"
       tabindex="0"
       aria-label="Taker Takeover is idle"
-      title="Taker Takeover — drag to move, double-click the face to ask, right-click for controls"
+      title="Taker — double-click to ask, drag to move, right-click for controls"
     >
-      <svg
-        class="pet__art"
-        viewBox="0 0 120 120"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-      >
-        <defs>
-          <linearGradient id="shell" x1="22" y1="18" x2="94" y2="102">
-            <stop offset="0" stop-color="#45dcff"/>
-            <stop offset="0.48" stop-color="#168cff"/>
-            <stop offset="1" stop-color="#0752dc"/>
-          </linearGradient>
-          <linearGradient id="face" x1="43" y1="38" x2="78" y2="75">
-            <stop offset="0" stop-color="#0d275f"/>
-            <stop offset="1" stop-color="#051738"/>
-          </linearGradient>
-          <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation="4" result="blur"/>
-            <feMerge>
-              <feMergeNode in="blur"/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-          </filter>
-        </defs>
-
-        <ellipse class="pet__shadow" cx="60" cy="104" rx="27" ry="5"/>
-        <path class="pet__ear pet__ear--left" d="M32 42 18 34 22 57 34 59Z"/>
-        <path class="pet__ear pet__ear--right" d="m88 42 14-8-4 23-12 2Z"/>
-        <path
-          class="pet__body"
-          d="M60 15c22 0 38 15 38 39v22c0 19-15 29-38 29S22 95 22 76V54c0-24 16-39 38-39Z"
-        />
-        <path class="pet__shine" d="M35 48c2-15 13-25 27-26"/>
-        <rect class="pet__face" x="36" y="38" width="48" height="38" rx="17"/>
-        <ellipse class="pet__eye pet__eye--left" cx="51" cy="56" rx="3.7" ry="5"/>
-        <ellipse class="pet__eye pet__eye--right" cx="69" cy="56" rx="3.7" ry="5"/>
-        <path class="pet__mouth" d="M54 66c4 3 8 3 12 0"/>
-        <path class="pet__foot pet__foot--left" d="M37 96c-4 3-7 7-7 11 7 2 13 0 18-5Z"/>
-        <path class="pet__foot pet__foot--right" d="M83 96c4 3 7 7 7 11-7 2-13 0-18-5Z"/>
-        <circle class="pet__signal" cx="92" cy="23" r="4"/>
-      </svg>
+      <canvas id="character" class="character" aria-hidden="true"></canvas>
+      <img id="character-fallback" class="character character--fallback" alt="" hidden>
+      <span class="sensor-line sensor-line--left" aria-hidden="true"></span>
+      <span class="sensor-line sensor-line--right" aria-hidden="true"></span>
     </main>
     <script type="module" src="pet.js"></script>
   </body>

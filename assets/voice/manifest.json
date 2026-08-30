@@ -22,5 +22,27 @@
       "languages": ["multilingual", "en", "id", "ms"],
       "sampleRate": 16000
     }
+  ],
+  "ttsRuntime": {
+    "id": "sherpa-onnx-node",
+    "version": "1.13.6",
+    "license": "Apache-2.0",
+    "source": "https://github.com/k2-fsa/sherpa-onnx"
+  },
+  "ttsModels": [
+    {
+      "id": "supertonic-3-int8",
+      "engine": "sherpa-onnx",
+      "revision": "2026-05-11",
+      "directoryName": "sherpa-onnx-supertonic-3-tts-int8-2026-05-11",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/sherpa-onnx-supertonic-3-tts-int8-2026-05-11.tar.bz2",
+      "sha256": "82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427",
+      "bytes": 128774318,
+      "license": "MIT",
+      "upstream": "https://github.com/supertone-inc/supertonic",
+      "languages": ["en", "id", "ms", "multilingual"],
+      "sampleRate": 44100,
+      "speakers": 10
+    }
   ]
 }

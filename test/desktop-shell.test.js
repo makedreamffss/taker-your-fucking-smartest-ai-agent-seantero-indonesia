@@ -17,8 +17,8 @@ test("pet shell is transparent, tiny, and renderer-isolated", () => {
   assert.equal(options.frame, false);
   assert.equal(options.alwaysOnTop, true);
   assert.equal(options.skipTaskbar, true);
-  assert.ok(options.width <= 140);
-  assert.ok(options.height <= 140);
+  assert.ok(options.width <= 200);
+  assert.ok(options.height <= 200);
   assert.equal(options.width, PET_WINDOW_SIZE.width);
   assert.equal(options.webPreferences.nodeIntegration, false);
   assert.equal(options.webPreferences.contextIsolation, true);
@@ -59,4 +59,28 @@ test("renderer has a restrictive content security policy and transparent page", 
   assert.match(html, /script-src 'self'/);
   assert.doesNotMatch(html, /\b(?:src|href)=["']https?:\/\//);
   assert.match(css, /background: transparent/);
+  assert.match(css, /\.pet\s*\{[^}]*-webkit-app-region: no-drag/s);
+  assert.doesNotMatch(css, /\.pet\s*\{[^}]*-webkit-app-region: drag/s);
+});
+
+test("response surface parses and sanitizes Markdown without a raw HTML sink", async () => {
+  const html = await readFile(
+    new URL("../src/desktop/renderer/popover.html", import.meta.url),
+    "utf8",
+  );
+  const script = await readFile(
+    new URL("../src/desktop/renderer/popover.js", import.meta.url),
+    "utf8",
+  );
+  const css = await readFile(
+    new URL("../src/desktop/renderer/popover.css", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(html, /<article id="message" class="markdown-body">/);
+  assert.match(script, /DOMPurify\.sanitize/);
+  assert.match(script, /RETURN_DOM_FRAGMENT:\s*true/);
+  assert.match(script, /target\.replaceChildren\(fragment\)/);
+  assert.doesNotMatch(script, /\.innerHTML\s*=/);
+  assert.match(css, /\.card\s*\{[^}]*border-radius:\s*0/s);
 });

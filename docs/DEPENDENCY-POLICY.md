@@ -28,6 +28,9 @@ weights.
 | onnxruntime-web | 1.29.0 | MIT | Local Silero ONNX/WASM inference |
 | Electron | 42.10.1 | MIT | Transparent sandboxed pet and popovers |
 | Vite | 8.2.2 | MIT | Reproducible local renderer build |
+| marked | 18.0.11 | MIT | GFM parsing; output is never trusted directly |
+| DOMPurify | 3.4.14 | MPL-2.0 OR Apache-2.0 | Strict response HTML sanitization |
+| sherpa-onnx-node / win-x64 | 1.13.6 | Apache-2.0 | Local neural TTS runtime |
 
 The lockfile is committed. npm reported zero known vulnerabilities after
 installation. Vite and Electron are development/runtime-host dependencies; the
@@ -40,6 +43,7 @@ terminal agent core still uses Node built-ins.
 | whisper.cpp Windows x64 | v1.8.6 / commit 23ee035 | MIT | SHA-256 in assets/voice/manifest.json |
 | Whisper base multilingual | revision 98aa99a | MIT | SHA-256 in assets/voice/manifest.json |
 | Silero VAD v5 model | vad-web 0.0.30 package | MIT upstream | npm integrity plus generated build SHA-256 |
+| Supertonic 3 INT8 | 2026-05-11 | MIT | SHA-256 in assets/voice/manifest.json |
 
 The voice installer downloads into the ignored .agent directory, verifies the full
 SHA-256 before extraction/use, and re-verifies cached artifacts. The renderer build
@@ -52,7 +56,7 @@ contains no CDN fallback.
 |---|---|---|
 | Silero VAD | MIT | integrated; live microphone benchmark pending |
 | whisper.cpp | MIT | integrated and English fixture benchmarked |
-| sherpa-onnx | Apache-2.0 | benchmark candidate; model license separate |
+| sherpa-onnx + Supertonic 3 INT8 | Apache-2.0 + MIT | integrated and benchmarked |
 | Kokoro 82M | Apache-2.0 | English TTS candidate |
 | OHF Piper | GPL-3.0 | optional Indonesian TTS adapter |
 | Tesseract | Apache-2.0 | OCR baseline candidate |
@@ -64,3 +68,8 @@ contains no CDN fallback.
 
 Candidate means researched, not approved for bundling. No candidate model or binary
 is downloaded until its artifact manifest is added.
+
+The Supertonic code repository was archived by its owner in July 2026. The admitted
+runtime is therefore exact-pinned, checksum-verified, and isolated behind the TTS
+interface so a maintained provider can replace it without changing conversation or
+desktop code. Archive status is not concealed as a quality claim.

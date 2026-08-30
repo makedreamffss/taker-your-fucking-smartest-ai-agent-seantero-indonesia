@@ -47,8 +47,8 @@ Required controls are based on Electron's official security checklist:
 - a narrow preload API; never expose raw IPC
 - later packaged builds will enable Electron fuses and ASAR integrity
 
-The pet is a transparent, frameless, always-on-top 124 by 124 window. It has no
-visible background and no permanent control surface. Native menus and future
+The character is a transparent, frameless, always-on-top 188 by 188 window. It has
+no visible background and no permanent control surface. Native menus and future
 separate short-lived popovers keep the idle footprint to the pet alone.
 
 Sources:
@@ -69,13 +69,15 @@ State is intentionally orthogonal: service, turn, audio input, and audio output 
 change independently. This matches real barge-in behavior better than a single
 listening/thinking/speaking enum.
 
-Candidate stack for measured spikes:
+Measured stack:
 
 - Silero VAD: MIT, small ONNX model, 8 kHz and 16 kHz support.
 - whisper.cpp: MIT, CPU-friendly C/C++ Whisper implementation with quantization.
-- sherpa-onnx: Apache-2.0, Windows and Node examples across ASR/VAD/TTS. Each model
-  artifact still needs its own license check.
-- Kokoro 82M: Apache-2.0 engine/model candidate for natural English speech.
+- sherpa-onnx 1.13.6: Apache-2.0, exact-pinned native Node runtime.
+- Supertonic 3 INT8: MIT-licensed distribution, ten included voices, 31-language support,
+  and a 44.1 kHz output path. The upstream repository is archived, so the provider
+  boundary and artifact manifest are mandatory exit conditions, not optional polish.
+- Kokoro 82M: Apache-2.0 alternative candidate for natural English speech.
 - OHF Piper: GPL-3.0 current upstream and an Indonesian id_ID voice. It can be an
   optional compliant adapter, not silently embedded under a permissive claim.
 
@@ -94,6 +96,13 @@ Implemented evidence:
   model startup and is a 0.557 real-time factor.
 - Silero VAD v5, ONNX Runtime Web 1.29.0, and the AudioWorklet load successfully
   from local built assets in a sandboxed hidden Electron smoke test.
+- Supertonic 3 INT8 synthesized the same 115-character operator response across all
+  ten supplied voices on this machine. Real-time factors ranged from 0.413 to 0.559.
+  M4 is the initial restrained profile at 0.440 RTF; this is a measured engineering
+  default, not a claim that automated timing can judge subjective voice quality.
+- The exact model archive is 128,774,318 bytes with SHA-256
+  `82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427`.
+- Both Node and Electron-native synthesis smoke tests generate valid PCM WAVE output.
 - Live microphone, echo/barge-in, Indonesian accuracy, memory, and the required
   second-provider comparison remain open exit criteria.
 
@@ -102,6 +111,8 @@ Sources:
 - [Silero VAD](https://github.com/snakers4/silero-vad)
 - [whisper.cpp](https://github.com/ggerganov/whisper.cpp)
 - [sherpa-onnx Node examples](https://github.com/k2-fsa/sherpa-onnx/blob/master/nodejs-addon-examples/README.md)
+- [sherpa-onnx Supertonic documentation](https://k2-fsa.github.io/sherpa/onnx/tts/supertonic.html)
+- [Supertonic](https://github.com/supertone-inc/supertonic)
 - [Kokoro](https://github.com/hexgrad/kokoro)
 - [Kokoro model card](https://huggingface.co/hexgrad/Kokoro-82M)
 - [OHF Piper](https://github.com/OHF-voice/piper1-gpl)

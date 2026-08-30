@@ -19,19 +19,20 @@
       </header>
 
       <section id="message-view" hidden>
-        <p id="message"></p>
+        <article id="message" class="markdown-body"></article>
       </section>
 
       <form id="prompt-view" hidden>
         <textarea
           id="prompt"
-          rows="4"
+          rows="3"
           maxlength="20000"
           autocomplete="off"
-          aria-label="Message for Taker"
+          aria-label="Instruction for Taker"
         ></textarea>
         <div class="actions">
-          <button class="button button--primary" type="submit">Send</button>
+          <span class="key-hint">CTRL + ENTER</span>
+          <button class="button button--primary" type="submit">Execute</button>
         </div>
       </form>
 

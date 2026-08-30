@@ -58,7 +58,11 @@ export class Agent {
 
         for (const toolCall of toolCalls) {
           const toolName = extractToolName(toolCall);
-          await this.#emit(onEvent, { type: "tool_started", name: toolName });
+          await this.#emit(onEvent, {
+            type: "tool_started",
+            name: toolName,
+            ...classifyToolActivity(toolName, toolCall),
+          });
           await this.#log("info", "tool_started", { tool: toolName });
 
           const result = await this.toolRegistry.execute(toolCall, {
@@ -121,4 +125,38 @@ function normalizeAssistantMessage(message) {
 function extractToolName(toolCall) {
   const name = toolCall?.function?.name ?? toolCall?.name;
   return typeof name === "string" && name ? name : "unknown_tool";
+}
+
+function classifyToolActivity(toolName, toolCall) {
+  if (toolName !== "execute_command") return {};
+  const rawArguments = toolCall?.function?.arguments ?? toolCall?.arguments;
+  let parsed = rawArguments;
+  if (typeof rawArguments === "string") {
+    try {
+      parsed = JSON.parse(rawArguments);
+    } catch {
+      return {};
+    }
+  }
+  if (!parsed || typeof parsed !== "object") return {};
+  const shell = new Set(["powershell", "cmd", "bash"]).has(parsed.shell)
+    ? parsed.shell
+    : undefined;
+  const command = typeof parsed.command === "string"
+    ? parsed.command.toLowerCase().slice(0, 4_000)
+    : "";
+  let operation;
+  if (/\b(?:npm|pnpm|yarn|pip|uv|cargo|winget|choco|scoop)\s+(?:add|install)\b/.test(command)) {
+    operation = "package.install";
+  } else if (/\b(?:npm\s+(?:run\s+)?test|node\s+--test|pytest|cargo\s+test|dotnet\s+test)\b/.test(command)) {
+    operation = "test.run";
+  } else if (/\b(?:npm\s+run\s+build|vite\s+build|tsc\b|cargo\s+build|dotnet\s+build)\b/.test(command)) {
+    operation = "build.compile";
+  } else if (/\b(?:rg|findstr|select-string)\b/.test(command)) {
+    operation = "filesystem.search";
+  }
+  return {
+    ...(shell ? { shell } : {}),
+    ...(operation ? { operation } : {}),
+  };
 }

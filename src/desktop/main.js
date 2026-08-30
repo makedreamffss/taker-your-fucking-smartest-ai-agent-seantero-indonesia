@@ -15,8 +15,10 @@ import {
 
 import { loadConfig } from "../config.js";
 import { createRuntime } from "../runtime.js";
+import { SupertonicTts } from "../voice/supertonic-tts.js";
 import { VoiceOrchestrator } from "../voice/voice-orchestrator.js";
 import { WhisperCppStt } from "../voice/whisper-cpp-stt.js";
+import { RendererAudioPlayer } from "./renderer-audio-player.js";
 import { RendererVadAdapter } from "./renderer-vad-adapter.js";
 import {
   createPetWindowOptions,
@@ -59,11 +61,16 @@ let runtime = null;
 let voice = null;
 let rendererVad = null;
 let sttProvider = null;
+let ttsProvider = null;
+let rendererAudioPlayer = null;
+let textSpeechController = null;
 let unsubscribeState = null;
+let unsubscribeSession = null;
 let microphoneAuthorized = false;
 let popoverView = null;
 let popoverHideTimer = null;
 let pendingApproval = null;
+let petDrag = null;
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 if (!hasSingleInstanceLock) app.quit();
@@ -100,9 +107,13 @@ app.on("window-all-closed", () => {
 
 app.on("before-quit", () => {
   microphoneAuthorized = false;
+  textSpeechController?.abort("application_quit");
   void voice?.stop("application_quit");
+  void ttsProvider?.stop("application_quit");
   unsubscribeState?.();
   unsubscribeState = null;
+  unsubscribeSession?.();
+  unsubscribeSession = null;
   resolveApproval(false);
 });
 
@@ -199,6 +210,11 @@ function attachRuntimeState() {
     },
     { emitCurrent: true },
   );
+  unsubscribeSession = runtime.session.subscribe((event) => {
+    if (!petWindow || petWindow.isDestroyed()) return;
+    const safeEvent = sanitizeCharacterEvent(event);
+    if (safeEvent) petWindow.webContents.send("character:event", safeEvent);
+  });
 }
 
 function createVoiceRuntime(config) {
@@ -220,15 +236,30 @@ function createVoiceRuntime(config) {
       petWindow?.webContents.send("voice:command", command);
     },
   });
-  const textOnlyOutput = {
-    async speak() {},
-    async stop() {},
-  };
+  rendererAudioPlayer = new RendererAudioPlayer({
+    sendCommand(command) {
+      if (!petWindow || petWindow.isDestroyed()) {
+        throw new Error("The character audio renderer is unavailable.");
+      }
+      petWindow.webContents.send("voice:playback-command", command);
+    },
+  });
+  ttsProvider = new SupertonicTts({
+    modelDirectory: path.join(
+      voiceRoot,
+      "sherpa-onnx-supertonic-3-tts-int8-2026-05-11",
+    ),
+    audioPlayer: rendererAudioPlayer,
+    speakerId: 3,
+    speed: 0.96,
+    numSteps: 8,
+    numThreads: 2,
+  });
   voice = new VoiceOrchestrator({
     session: runtime.session,
     vad: rendererVad,
     stt: sttProvider,
-    tts: textOnlyOutput,
+    tts: ttsProvider,
     requestApproval,
     onTranscript(text) {
       showPopover({
@@ -246,7 +277,7 @@ function createVoiceRuntime(config) {
           text,
           tone: "response",
         },
-        { autoHideMs: 14_000 },
+        { autoHideMs: 45_000 },
       );
     },
     onError(error) {
@@ -259,6 +290,45 @@ function installIpcHandlers() {
   ipcMain.on("pet:activate", (event) => {
     if (!isPetSender(event)) return;
     showPromptPopover();
+  });
+
+  ipcMain.on("pet:renderer-error", (event, message) => {
+    if (!isPetSender(event) || typeof message !== "string") return;
+    showError(new Error("Character renderer failed: " + message.slice(0, 500)));
+  });
+
+  ipcMain.on("pet:drag-start", (event, point) => {
+    if (!isPetSender(event) || !isSafePoint(point) || !petWindow) return;
+    const [windowX, windowY] = petWindow.getPosition();
+    petDrag = {
+      pointerX: point.x,
+      pointerY: point.y,
+      windowX,
+      windowY,
+    };
+  });
+
+  ipcMain.on("pet:drag-move", (event, point) => {
+    if (!isPetSender(event) || !isSafePoint(point) || !petDrag || !petWindow) {
+      return;
+    }
+    const display = screen.getDisplayNearestPoint(point);
+    const x = clamp(
+      petDrag.windowX + point.x - petDrag.pointerX,
+      display.workArea.x,
+      display.workArea.x + display.workArea.width - PET_WINDOW_SIZE.width,
+    );
+    const y = clamp(
+      petDrag.windowY + point.y - petDrag.pointerY,
+      display.workArea.y,
+      display.workArea.y + display.workArea.height - PET_WINDOW_SIZE.height,
+    );
+    petWindow.setPosition(Math.round(x), Math.round(y), false);
+  });
+
+  ipcMain.on("pet:drag-end", (event) => {
+    if (!isPetSender(event)) return;
+    petDrag = null;
   });
 
   ipcMain.on("activity-state:ready", (event) => {
@@ -295,6 +365,11 @@ function installIpcHandlers() {
     } catch (error) {
       showError(error);
     }
+  });
+
+  ipcMain.on("voice:playback-event", (event, payload) => {
+    if (!isPetSender(event) || !isPlaybackEvent(payload)) return;
+    rendererAudioPlayer?.handleEvent(payload);
   });
 
   ipcMain.on("popover:ready", (event) => {
@@ -347,6 +422,7 @@ async function sendTextTurn(text) {
     return;
   }
   try {
+    await interruptActiveWork("new_text_turn");
     const response = await runtime.session.send(text, { requestApproval });
     showPopover(
       {
@@ -355,8 +431,9 @@ async function sendTextTurn(text) {
         text: response.content,
         tone: "response",
       },
-      { autoHideMs: 14_000 },
+      { autoHideMs: 45_000 },
     );
+    await speakTextResponse(response.content);
   } catch (error) {
     if (error?.name !== "AbortError" && error?.code !== "REQUEST_ABORTED") {
       showError(error);
@@ -367,7 +444,7 @@ async function sendTextTurn(text) {
 async function setListening(enabled) {
   try {
     if (enabled) {
-      await sttProvider.verify();
+      await Promise.all([sttProvider.verify(), ttsProvider.verify()]);
       microphoneAuthorized = true;
       await voice.start();
       showPopover({
@@ -446,9 +523,11 @@ function showPetMenu(window) {
       click: () => void setListening(!listening),
     },
     {
-      label: "Interrupt active turn",
-      enabled: runtime.session.isBusy,
-      click: () => runtime.session.interrupt("user_interruption"),
+      label: "Interrupt active work or speech",
+      enabled:
+        runtime.session.isBusy ||
+        runtime.activityState.snapshot.audioOutput !== "silent",
+      click: () => void interruptActiveWork("user_interruption"),
     },
     { type: "separator" },
     {
@@ -482,6 +561,8 @@ function showPopover(view, { autoHideMs = 8_000 } = {}) {
   clearTimeout(popoverHideTimer);
   popoverHideTimer = null;
   popoverView = structuredClone(view);
+  const size = popoverSizeFor(view);
+  popoverWindow.setContentSize(size.width, size.height, false);
   positionPopover();
   popoverWindow.webContents.send("popover:view", popoverView);
   popoverWindow.show();
@@ -530,26 +611,78 @@ function positionPet(window) {
 function positionPopover() {
   if (!petWindow || !popoverWindow) return;
   const petBounds = petWindow.getBounds();
+  const popoverBounds = popoverWindow.getBounds();
   const display = screen.getDisplayMatching(petBounds);
   const preferredX =
-    petBounds.x + petBounds.width - POPOVER_WINDOW_SIZE.width;
+    petBounds.x + petBounds.width - popoverBounds.width;
   const preferredY =
-    petBounds.y - POPOVER_WINDOW_SIZE.height - POPOVER_WINDOW_SIZE.gap;
+    petBounds.y - popoverBounds.height - POPOVER_WINDOW_SIZE.gap;
   const x = clamp(
     preferredX,
     display.workArea.x,
-    display.workArea.x +
+      display.workArea.x +
       display.workArea.width -
-      POPOVER_WINDOW_SIZE.width,
+      popoverBounds.width,
   );
   const y = clamp(
     preferredY,
     display.workArea.y,
-    display.workArea.y +
+      display.workArea.y +
       display.workArea.height -
-      POPOVER_WINDOW_SIZE.height,
+      popoverBounds.height,
   );
   popoverWindow.setPosition(Math.round(x), Math.round(y), false);
+}
+
+async function speakTextResponse(text) {
+  textSpeechController?.abort("superseded");
+  const controller = new AbortController();
+  textSpeechController = controller;
+  try {
+    runtime.activityState.transition("audioOutput", "synthesizing", {
+      source: "typed_turn",
+      reason: "response_ready",
+    });
+    await ttsProvider.speak(text, {
+      signal: controller.signal,
+      onPlaybackStart() {
+        if (
+          !controller.signal.aborted &&
+          runtime.activityState.snapshot.audioOutput === "synthesizing"
+        ) {
+          runtime.activityState.transition("audioOutput", "speaking", {
+            source: "supertonic",
+            reason: "playback_started",
+          });
+        }
+      },
+    });
+  } finally {
+    if (textSpeechController === controller) textSpeechController = null;
+    if (runtime.activityState.snapshot.audioOutput !== "silent") {
+      runtime.activityState.transition("audioOutput", "silent", {
+        source: "supertonic",
+        reason: controller.signal.aborted
+          ? "playback_interrupted"
+          : "playback_completed",
+      });
+    }
+  }
+}
+
+async function interruptActiveWork(reason) {
+  textSpeechController?.abort(reason);
+  textSpeechController = null;
+  await voice?.interrupt(reason);
+}
+
+function popoverSizeFor(view) {
+  if (view?.mode === "prompt") return { width: 500, height: 178 };
+  if (view?.mode === "approval") return { width: 560, height: 440 };
+  const characters = typeof view?.text === "string" ? view.text.length : 0;
+  if (characters <= 220) return { width: 520, height: 224 };
+  if (characters <= 700) return { width: 540, height: 310 };
+  return { width: 560, height: 420 };
 }
 
 function sanitizeStateEvent(event) {
@@ -560,6 +693,39 @@ function sanitizeStateEvent(event) {
     changedAxes: event.changedAxes,
     current: event.current,
     uiState: event.uiState,
+  };
+}
+
+function sanitizeCharacterEvent(event) {
+  if (!event || typeof event.type !== "string") return null;
+  const allowed = new Set([
+    "turn_started",
+    "thinking",
+    "tool_started",
+    "tool_completed",
+    "approval_requested",
+    "approval_resolved",
+    "completed",
+    "turn_completed",
+    "interruption_requested",
+    "turn_cancelled",
+    "turn_failed",
+  ]);
+  if (!allowed.has(event.type)) return null;
+  return {
+    type: event.type,
+    ...(typeof event.name === "string" ? { name: event.name.slice(0, 80) } : {}),
+    ...(new Set(["powershell", "cmd", "bash"]).has(event.shell)
+      ? { shell: event.shell }
+      : {}),
+    ...(typeof event.operation === "string" &&
+    /^(?:package\.install|test\.run|build\.compile|filesystem\.search)$/.test(event.operation)
+      ? { operation: event.operation }
+      : {}),
+    ...(typeof event.approved === "boolean" ? { approved: event.approved } : {}),
+    ...(typeof event.errorCode === "string"
+      ? { errorCode: event.errorCode.slice(0, 80) }
+      : {}),
   };
 }
 
@@ -582,6 +748,27 @@ function isVoiceEvent(payload) {
       "vad_misfire",
       "error",
     ]).has(payload.type)
+  );
+}
+
+function isPlaybackEvent(payload) {
+  return (
+    payload &&
+    typeof payload === "object" &&
+    typeof payload.id === "string" &&
+    payload.id.length <= 80 &&
+    new Set(["started", "ended", "stopped", "error"]).has(payload.type)
+  );
+}
+
+function isSafePoint(value) {
+  return (
+    value &&
+    typeof value === "object" &&
+    Number.isInteger(value.x) &&
+    Number.isInteger(value.y) &&
+    Math.abs(value.x) <= 100_000 &&
+    Math.abs(value.y) <= 100_000
   );
 }
 

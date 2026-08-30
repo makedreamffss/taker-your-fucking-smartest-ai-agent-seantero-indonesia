@@ -6,9 +6,9 @@ engine while keeping the model, agent loop, tools, permissions, conversation, an
 interface separated.
 
 This milestone has both the terminal runtime and the first floating desktop shell.
-The shell is deliberately only a tiny transparent blue pet: no permanent panel,
-card, or visible window background. Capability is broad while authorization remains
-explicit and user-selectable.
+The shell is a transparent, monochrome pixel operator: no permanent panel, card, or
+visible window background. Capability is broad while authorization remains explicit
+and user-selectable.
 
 ## What works now
 
@@ -31,15 +31,21 @@ explicit and user-selectable.
   scripts when the exact prebuilt tool does not exist
 - Tool failures returned to the model so it can correct a request
 - Metadata-only JSONL event logs under `.agent/logs/`
-- A sandboxed Electron pet shell with a transparent 124-by-124 window, no taskbar
+- A sandboxed Electron character shell with a transparent 188-by-188 window, no taskbar
   entry, no Node.js in the renderer, a restrictive CSP, and blocked navigation
-- A compact text/response/approval popover that exists only while interacting
+- A GPU point-field character made from 12,544 independently displaced pixels,
+  12 composable moods, and 240 named semantic action clips
+- A sharp transient operator transcript with GFM Markdown parsed by Marked and
+  allowlist-sanitized by DOMPurify before insertion
 - Self-hosted Silero VAD v5 in the renderer; model, worklet, and ONNX/WASM assets
   are bundled locally with a generated SHA-256 manifest
 - Local multilingual speech recognition through pinned whisper.cpp v1.8.6 and the
   Whisper base model, both verified before installation
 - Voice barge-in orchestration that rejects stale transcripts, interrupts an active
   agent turn, and stops output through the TTS provider boundary
+- Local neural speech through Supertonic 3 INT8 and sherpa-onnx, with ten voice
+  profiles, English/Indonesian selection, bounded sentence chunks, and waveform-
+  driven character motion; typed and spoken prompts both speak their replies
 - A health/status command and automated unit tests
 
 ## Requirements
@@ -68,11 +74,11 @@ Launch the floating pet:
 npm run desktop
 ```
 
-Drag the pet to move it. Right-click it for the temporary approval-mode menu or to
-quit. Double-click its face to open the temporary text prompt. Install the verified
-local speech runtime once with `npm run voice:install`, then choose Start listening
-from the right-click menu. Spoken replies are not enabled yet; responses appear in
-the temporary popover.
+Drag the character to move it. Right-click for approval controls, voice capture,
+interruption, or quit. Double-click it to open the transient command surface. Install
+the verified local speech runtime once with `npm run voice:install`, then choose
+Start listening from the right-click menu. Replies to both typed and spoken prompts
+are shown as a formatted transcript and spoken by the local neural voice.
 
 At the terminal prompt, try:
 
@@ -158,11 +164,11 @@ same denied action through another shell or generated helper.
 
 ## Not implemented yet
 
-Text-to-speech playback, live microphone/device benchmark coverage, screen
-capture/OCR, application mouse/keyboard control, persistent long-term memory,
+Live microphone/device benchmark coverage, screen capture/OCR, application
+mouse/keyboard control, persistent long-term memory,
 durable autonomous jobs, packaging, and start-on-login remain future milestones.
-The VAD/STT path, voice interruption controller, state-aware pet, text conversation,
-and approval popovers are implemented.
+The VAD/STT/TTS path, voice interruption controller, dynamic character, text
+conversation, and approval surfaces are implemented.
 
 ## Development
 
@@ -174,7 +180,10 @@ ignored `.agent/runtime/` directory only after SHA-256 verification.
 npm test
 npm run check
 npm run voice:smoke-vad
+npm run voice:smoke-tts
+npm run voice:smoke-tts-electron
 npm run voice:benchmark -- .agent/fixtures/jfk.wav
+npm run voice:benchmark-tts
 ```
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md),

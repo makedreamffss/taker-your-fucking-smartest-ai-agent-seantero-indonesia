@@ -110,6 +110,25 @@ export class VoiceOrchestrator {
     return true;
   }
 
+  async interrupt(reason = "voice_interrupted") {
+    const cancelledCycle = this.#cancelCycle(reason);
+    const interruptedTurn = this.session.interrupt(reason);
+    await this.tts.stop(reason);
+    if (this.activityState.snapshot.audioOutput !== "silent") {
+      this.activityState.transition("audioOutput", "silent", {
+        source: "voice",
+        reason,
+      });
+    }
+    await this.#emit({
+      type: "voice_interrupted",
+      reason: String(reason),
+      cancelledCycle,
+      interruptedTurn,
+    });
+    return cancelledCycle || interruptedTurn;
+  }
+
   async #handleSpeechStart() {
     if (!this.#running) return;
     this.#cancelCycle("voice_barge_in");

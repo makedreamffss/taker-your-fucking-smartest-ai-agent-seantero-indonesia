@@ -9,7 +9,8 @@ Terminal / transient text popover / VAD speech segment
      -> VoiceOrchestrator
         -> local Silero VAD in sandboxed Chromium
         -> cancellable whisper.cpp subprocess
-        -> future TTS provider
+        -> local Supertonic 3 INT8 through sherpa-onnx
+        -> bounded WAVE IPC -> renderer Web Audio playback
      -> Agent
      -> Conversation (whole-turn bounded history)
      -> OllamaClient -> local Ollama API -> gpt-oss:120b-cloud
@@ -57,12 +58,23 @@ the process.
 - `src/desktop/preload.cjs` exposes narrow state and validated voice channels.
   It never exposes raw Electron IPC or filesystem/command primitives.
 - `src/desktop/renderer/` contains the sandboxed, Node-free pet, local Silero
-  VAD capture path, and transient popover renderer.
+  VAD capture path, WebGL2 pixel-field character, Web Audio playback, and transient
+  popover renderer.
+- `src/desktop/renderer/character-motion-catalog.js` defines 40 semantic motion
+  families across six phases (240 addressable clips) and 12 orthogonal moods.
+- `src/desktop/renderer/pixel-character-renderer.js` samples the transparent anchor
+  into 12,544 GPU points and deforms eye, jaw, crown, edge, scan, and glitch regions
+  without using pre-rendered animation swaps.
+- `src/desktop/renderer-audio-player.js` is the bounded request/acknowledgement
+  bridge between neural synthesis and sandboxed Web Audio playback.
 - `src/voice/voice-orchestrator.js` owns speech-cycle generation, stale-result
   rejection, barge-in, agent turns, and the TTS provider boundary.
 - `src/voice/whisper-cpp-stt.js` writes a bounded temporary PCM WAV, launches
   the pinned local CLI with cancellation/timeout, reads the transcript, and erases
   temporary audio and output.
+- `src/voice/supertonic-tts.js` lazily initializes the pinned neural engine, removes
+  non-speech markup, chunks long output, pipelines synthesis with playback, and
+  propagates cancellation. It never falls back to an OS or hosted TTS voice.
 - `src/infra/jsonl-logger.js` records event metadata, not prompt/file contents.
 
 ## Target process topology
@@ -73,21 +85,22 @@ Electron main process
   - SessionController and model/tool orchestration
   - approval coordinator
   |
-  +-- sandboxed pet renderer
-  |     - state animation and user activation
+  +-- sandboxed character renderer
+  |     - GPU pixel expressions, semantic action motion, and user activation
   |     - Chromium audio processing and local Silero VAD
+  |     - Web Audio playback and waveform-energy animation
   |     - no Node.js or arbitrary IPC
   |
   +-- transient sandboxed popovers
   |     - conversation and approval views
   |
-  +-- cancellable child/utility workers
-        - whisper.cpp STT and future TTS
+  +-- cancellable child/utility workers (next hardening gate)
+        - whisper.cpp STT
         - screen image processing/OCR
         - crash isolation and bounded queues
 ```
 
-The pet window is 124 by 124 pixels, transparent, frameless, draggable,
+The character window is 188 by 188 pixels, transparent, frameless, draggable,
 always-on-top, and absent from the taskbar. Normal use shows the pet only. Larger
 surfaces are separate short-lived windows so invisible transparent areas never
 intercept desktop clicks.
@@ -117,7 +130,12 @@ intercept desktop clicks.
    speech segments cross the typed preload bridge. Temporary STT audio is removed in
    a finally block.
 10. Normal desktop state is pet-only. Prompt, response, and approval surfaces are a
-   separate window that is hidden again after the interaction.
+    separate window that is hidden again after the interaction.
+11. Model output is parsed as Markdown and passed through a strict DOMPurify
+    allowlist. The renderer inserts a sanitized document fragment and never assigns
+    model content to `innerHTML`.
+12. Synthesized speech is bounded before IPC, acknowledged by id, interruptible from
+    the renderer, and coupled to real waveform energy for character movement.
 
 ## Gated roadmap
 

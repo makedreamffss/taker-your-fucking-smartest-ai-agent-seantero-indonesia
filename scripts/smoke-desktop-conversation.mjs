@@ -7,40 +7,58 @@ const popover = targets.find(
 if (!popover) throw new Error("The popover renderer is not running.");
 
 const client = await createClient(popover.webSocketDebuggerUrl);
+const pet = targets.find((target) => target.url === "taker://app/index.html");
+if (!pet) throw new Error("The character renderer is not running.");
+const petClient = await createClient(pet.webSocketDebuggerUrl);
 const inspectOnly = process.argv.includes("--inspect-only");
 if (!inspectOnly) {
   await client.call("Runtime.evaluate", {
     expression:
-      "document.getElementById('prompt').value='Reply with exactly READY';document.getElementById('prompt-view').requestSubmit()",
+      "document.getElementById('prompt').value='Reply with exactly this Markdown, without a code fence: ## READY\\n- Neural voice: active\\n- Pixel field: active';document.getElementById('prompt-view').requestSubmit()",
   });
 }
 
 const deadline = Date.now() + 180_000;
 let state;
+let currentPetState = "unknown";
+const observedPetStates = new Set();
 do {
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  await new Promise((resolve) => setTimeout(resolve, 100));
   const result = await client.call("Runtime.evaluate", {
     expression:
-      "({title:document.getElementById('title').textContent,message:document.getElementById('message').textContent,messageHidden:document.getElementById('message-view').hidden})",
+      "({title:document.getElementById('title').textContent,message:document.getElementById('message').textContent,messageHidden:document.getElementById('message-view').hidden,tags:[...document.getElementById('message').children].map(node=>node.tagName),unsafe:document.getElementById('message').querySelectorAll('script,style,iframe,object,form,svg,math').length})",
     returnByValue: true,
   });
   state = result.result.value;
+  const petResult = await petClient.call("Runtime.evaluate", {
+    expression: "document.getElementById('pet').dataset.state",
+    returnByValue: true,
+  });
+  currentPetState = petResult.result.value;
+  observedPetStates.add(currentPetState);
   if (
     inspectOnly ||
     state.title === "Taker" &&
     state.messageHidden === false &&
-    state.message.trim().length > 0
+    state.message.trim().length > 0 &&
+    observedPetStates.has("speaking") &&
+    currentPetState === "idle"
   ) {
     break;
   }
 } while (Date.now() < deadline);
 client.close();
+petClient.close();
 
 if (
   !inspectOnly &&
-  state.title !== "Taker" ||
+    state.title !== "Taker" ||
   !inspectOnly &&
-    (state.messageHidden !== false || state.message.trim().length === 0)
+    (state.messageHidden !== false ||
+      state.message.trim().length === 0 ||
+      state.unsafe !== 0 ||
+      !observedPetStates.has("speaking") ||
+      currentPetState !== "idle")
 ) {
   throw new Error(
     "The desktop conversation did not complete before timeout. Last state: " +
@@ -51,7 +69,13 @@ console.log(
   JSON.stringify(
     inspectOnly
       ? { inspected: true, popover: state }
-      : { passed: true, response: state.message },
+      : {
+          passed: true,
+          response: state.message,
+          renderedTags: state.tags,
+          observedPetStates: [...observedPetStates],
+          unsafeElements: state.unsafe,
+        },
     null,
     2,
   ),
