@@ -1,0 +1,6 @@
+node_modules/
+.env
+.agent/
+.test-tmp-*/
+coverage/
+*.log

@@ -1,0 +1,16 @@
+{
+  "name": "taker-takeover",
+  "version": "0.2.0",
+  "private": true,
+  "description": "A reliable, extensible desktop AI agent runtime backed by Ollama.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/cli.js",
+    "doctor": "node src/cli.js --doctor",
+    "test": "node --test",
+    "check": "node --check src/cli.js && node --test"
+  }
+}
