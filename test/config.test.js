@@ -14,7 +14,7 @@ test("configuration defaults to the requested Ollama cloud model", () => {
   assert.equal(config.workspace, workspace);
   assert.equal(config.approvalMode, "approval");
   assert.equal(config.commandTimeoutMs, 120_000);
-  assert.equal(config.voiceProfile, "M2");
+  assert.equal(config.voiceProfile, "peter_yearsley");
 });
 
 test("configuration keeps its log path inside the workspace", () => {
@@ -41,10 +41,10 @@ test("configuration accepts only explicit approval modes", () => {
   );
 });
 
-test("configuration pins the operator voice to a named Supertonic profile", () => {
-  assert.equal(loadConfig({ AGENT_VOICE_PROFILE: "m3" }).voiceProfile, "M3");
+test("configuration pins the operator voice to a safe Pocket profile name", () => {
+  assert.equal(loadConfig({ AGENT_VOICE_PROFILE: "Michael" }).voiceProfile, "michael");
   assert.throws(
-    () => loadConfig({ AGENT_VOICE_PROFILE: "thanos" }),
-    /must be one of: M1, M2, M3, M4, M5, F1, F2, F3, F4, F5/,
+    () => loadConfig({ AGENT_VOICE_PROFILE: "..\\outside.wav" }),
+    /must contain only lowercase letters, digits, and underscores/,
   );
 });

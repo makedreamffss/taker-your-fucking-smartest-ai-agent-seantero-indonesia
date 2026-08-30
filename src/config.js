@@ -9,7 +9,7 @@ const DEFAULTS = Object.freeze({
   requestTimeoutMs: 300_000,
   commandTimeoutMs: 120_000,
   approvalMode: "approval",
-  voiceProfile: "M2",
+  voiceProfile: "peter_yearsley",
   logPath: ".agent/logs/events.jsonl",
 });
 
@@ -56,10 +56,8 @@ export function loadConfig(env = process.env, cwd = process.cwd()) {
       "AGENT_APPROVAL_MODE",
       ["approval", "semi"],
     ),
-    voiceProfile: parseChoice(
-      env.AGENT_VOICE_PROFILE?.trim().toUpperCase() || DEFAULTS.voiceProfile,
-      "AGENT_VOICE_PROFILE",
-      ["M1", "M2", "M3", "M4", "M5", "F1", "F2", "F3", "F4", "F5"],
+    voiceProfile: parseVoiceProfile(
+      env.AGENT_VOICE_PROFILE?.trim().toLowerCase() || DEFAULTS.voiceProfile,
     ),
     logPath,
   });
@@ -114,6 +112,15 @@ function parseChoice(value, name, allowedValues) {
   if (!allowedValues.includes(value)) {
     throw new ConfigurationError(
       `${name} must be one of: ${allowedValues.join(", ")}.`,
+    );
+  }
+  return value;
+}
+
+function parseVoiceProfile(value) {
+  if (!/^[a-z][a-z0-9_]{0,63}$/.test(value)) {
+    throw new ConfigurationError(
+      "AGENT_VOICE_PROFILE must contain only lowercase letters, digits, and underscores.",
     );
   }
   return value;

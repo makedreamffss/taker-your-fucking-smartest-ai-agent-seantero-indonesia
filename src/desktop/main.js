@@ -15,7 +15,7 @@ import {
 
 import { loadConfig } from "../config.js";
 import { createRuntime } from "../runtime.js";
-import { SupertonicTts } from "../voice/supertonic-tts.js";
+import { PocketTts } from "../voice/pocket-tts.js";
 import { VoiceOrchestrator } from "../voice/voice-orchestrator.js";
 import { WhisperCppStt } from "../voice/whisper-cpp-stt.js";
 import { RendererAudioPlayer } from "./renderer-audio-player.js";
@@ -92,6 +92,9 @@ app.whenReady().then(async () => {
   installIpcHandlers();
   attachRuntimeState();
   createVoiceRuntime(config);
+  void ttsProvider.verify().catch((error) => {
+    console.error(`[voice] Pocket TTS warm-up failed: ${error.message}`);
+  });
 
   await Promise.all([
     petWindow.loadURL("taker://app/index.html"),
@@ -110,6 +113,7 @@ app.on("before-quit", () => {
   textSpeechController?.abort("application_quit");
   void voice?.stop("application_quit");
   void ttsProvider?.stop("application_quit");
+  ttsProvider?.dispose?.();
   unsubscribeState?.();
   unsubscribeState = null;
   unsubscribeSession?.();
@@ -218,7 +222,7 @@ function attachRuntimeState() {
 }
 
 function createVoiceRuntime(config) {
-  const voiceRoot = path.join(config.workspace, ".agent", "runtime", "voice");
+  const voiceRoot = path.join(PROJECT_ROOT, ".agent", "runtime", "voice");
   sttProvider = new WhisperCppStt({
     binaryPath: path.join(
       voiceRoot,
@@ -244,15 +248,18 @@ function createVoiceRuntime(config) {
       petWindow.webContents.send("voice:playback-command", command);
     },
   });
-  ttsProvider = new SupertonicTts({
-    modelDirectory: path.join(
+  ttsProvider = new PocketTts({
+    pythonPath: path.join(
       voiceRoot,
-      "sherpa-onnx-supertonic-3-tts-int8-2026-05-11",
+      "pocket-tts-3.0.2",
+      "Scripts",
+      "python.exe",
     ),
+    workerPath: path.join(PROJECT_ROOT, "src", "voice", "pocket-tts-worker.py"),
+    cacheDirectory: path.join(voiceRoot, "huggingface"),
     audioPlayer: rendererAudioPlayer,
-    voiceProfile: config.voiceProfile,
-    speed: 0.92,
-    numSteps: 10,
+    voice: config.voiceProfile,
+    language: "english",
     numThreads: 2,
   });
   voice = new VoiceOrchestrator({
@@ -651,7 +658,7 @@ async function speakTextResponse(text) {
           runtime.activityState.snapshot.audioOutput === "synthesizing"
         ) {
           runtime.activityState.transition("audioOutput", "speaking", {
-            source: "supertonic",
+            source: "pocket_tts",
             reason: "playback_started",
           });
         }
@@ -661,7 +668,7 @@ async function speakTextResponse(text) {
     if (textSpeechController === controller) textSpeechController = null;
     if (runtime.activityState.snapshot.audioOutput !== "silent") {
       runtime.activityState.transition("audioOutput", "silent", {
-        source: "supertonic",
+        source: "pocket_tts",
         reason: controller.signal.aborted
           ? "playback_interrupted"
           : "playback_completed",

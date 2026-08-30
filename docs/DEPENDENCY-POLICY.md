@@ -30,7 +30,6 @@ weights.
 | Vite | 8.2.2 | MIT | Reproducible local renderer build |
 | marked | 18.0.11 | MIT | GFM parsing; output is never trusted directly |
 | DOMPurify | 3.4.14 | MPL-2.0 OR Apache-2.0 | Strict response HTML sanitization |
-| sherpa-onnx-node / win-x64 | 1.13.6 | Apache-2.0 | Local neural TTS runtime |
 
 The lockfile is committed. npm reported zero known vulnerabilities after
 installation. Vite and Electron are development/runtime-host dependencies; the
@@ -43,7 +42,9 @@ terminal agent core still uses Node built-ins.
 | whisper.cpp Windows x64 | v1.8.6 / commit 23ee035 | MIT | SHA-256 in assets/voice/manifest.json |
 | Whisper base multilingual | revision 98aa99a | MIT | SHA-256 in assets/voice/manifest.json |
 | Silero VAD v5 model | vad-web 0.0.30 package | MIT upstream | npm integrity plus generated build SHA-256 |
-| Supertonic 3 INT8 | 2026-05-11 | OpenRAIL-M | SHA-256 in assets/voice/manifest.json |
+| Pocket TTS runtime | 3.0.2 plus transitive lock | MIT | Exact Python package lock |
+| Pocket TTS English standard | revision d29db79 | CC-BY-4.0 | Revision-pinned by runtime config |
+| Peter Yearsley voice source | voice-zero catalog | CC0-1.0 | SHA-256 in assets/voice/manifest.json |
 
 The voice installer downloads into the ignored .agent directory, verifies the full
 SHA-256 before extraction/use, and re-verifies cached artifacts. The renderer build
@@ -56,8 +57,10 @@ contains no CDN fallback.
 |---|---|---|
 | Silero VAD | MIT | integrated; live microphone benchmark pending |
 | whisper.cpp | MIT | integrated and English fixture benchmarked |
-| sherpa-onnx + Supertonic 3 INT8 | Apache-2.0 + OpenRAIL-M | integrated and benchmarked |
-| Kokoro 82M | Apache-2.0 | English TTS candidate |
+| Pocket TTS 3.0.2 | MIT code + CC-BY-4.0 weights | integrated and benchmarked |
+| Kokoro 82M | Apache-2.0 | rejected on measured pitch and latency |
+| Chatterbox Nano | MIT | rejected at 12.677 RTF on this CPU |
+| Qwen3-TTS 0.6B | Apache-2.0 | rejected for this machine's memory envelope |
 | OHF Piper | GPL-3.0 | optional Indonesian TTS adapter |
 | Tesseract | Apache-2.0 | OCR baseline candidate |
 | PaddleOCR | Apache-2.0 | optional heavy OCR provider |
@@ -69,7 +72,7 @@ contains no CDN fallback.
 Candidate means researched, not approved for bundling. No candidate model or binary
 is downloaded until its artifact manifest is added.
 
-The Supertonic code repository was archived by its owner in July 2026. The admitted
-runtime is therefore exact-pinned, checksum-verified, and isolated behind the TTS
-interface so a maintained provider can replace it without changing conversation or
-desktop code. Archive status is not concealed as a quality claim.
+Pocket TTS runs in a project-local Python 3.12 virtual environment. Its complete
+transitive package set is exact-pinned, model downloads are revision-pinned by the
+admitted package, and the provider can be replaced without changing conversation or
+desktop code.

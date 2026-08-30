@@ -24,25 +24,33 @@
     }
   ],
   "ttsRuntime": {
-    "id": "sherpa-onnx-node",
-    "version": "1.13.6",
-    "license": "Apache-2.0",
-    "source": "https://github.com/k2-fsa/sherpa-onnx"
+    "id": "pocket-tts",
+    "version": "3.0.2",
+    "python": "3.12",
+    "license": "MIT",
+    "source": "https://github.com/kyutai-labs/pocket-tts"
   },
   "ttsModels": [
     {
-      "id": "supertonic-3-int8",
-      "engine": "sherpa-onnx",
-      "revision": "2026-05-11",
-      "directoryName": "sherpa-onnx-supertonic-3-tts-int8-2026-05-11",
-      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/sherpa-onnx-supertonic-3-tts-int8-2026-05-11.tar.bz2",
-      "sha256": "82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427",
-      "bytes": 128774318,
-      "license": "MIT",
-      "upstream": "https://github.com/supertone-inc/supertonic",
-      "languages": ["en", "id", "ms", "multilingual"],
-      "sampleRate": 44100,
-      "speakers": 10
+      "id": "pocket-tts-english-standard",
+      "engine": "pocket-tts",
+      "repository": "kyutai/pocket-tts-without-voice-cloning",
+      "revision": "d29db7978e464fb90cb3359ee0c69a273b9142cc",
+      "embeddingRevision": "e81d79e8194ad4c7ce879c87a4258ef20cbf2487",
+      "license": "CC-BY-4.0",
+      "languages": ["en"],
+      "sampleRate": 24000,
+      "parameters": 100000000
+    }
+  ],
+  "ttsVoices": [
+    {
+      "id": "peter_yearsley",
+      "repository": "kyutai/tts-voices",
+      "sourcePath": "voice-zero/peter_yearsley.wav",
+      "sourceSha256": "fbb3920fda7ae26a5a8b317ffcae1d55c0bd5d89d075205f5a52b1e924b83f51",
+      "sourceLicense": "CC0-1.0",
+      "measuredMedianPitchHz": 88.2
     }
   ]
 }

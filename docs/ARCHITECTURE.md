@@ -9,7 +9,7 @@ Terminal / transient text popover / VAD speech segment
      -> VoiceOrchestrator
         -> local Silero VAD in sandboxed Chromium
         -> cancellable whisper.cpp subprocess
-        -> local Supertonic 3 INT8 through sherpa-onnx
+        -> local Pocket TTS through an isolated persistent Python worker
         -> bounded WAVE IPC -> renderer Web Audio playback
      -> Agent
      -> Conversation (whole-turn bounded history)
@@ -72,9 +72,11 @@ the process.
 - `src/voice/whisper-cpp-stt.js` writes a bounded temporary PCM WAV, launches
   the pinned local CLI with cancellation/timeout, reads the transcript, and erases
   temporary audio and output.
-- `src/voice/supertonic-tts.js` lazily initializes the pinned neural engine, removes
-  non-speech markup, chunks long output, pipelines synthesis with playback, and
-  propagates cancellation. It never falls back to an OS or hosted TTS voice.
+- `src/voice/pocket-tts.js` owns the pinned local neural worker, removes non-speech
+  markup, chunks long output, pipelines synthesis with playback, and terminates the
+  worker on cancellation. It never falls back to an OS or hosted TTS voice.
+- `src/voice/pocket-tts-worker.py` keeps the model and voice state resident behind a
+  line-delimited JSON protocol and returns only validated PCM WAVE payloads.
 - `src/infra/jsonl-logger.js` records event metadata, not prompt/file contents.
 
 ## Target process topology
@@ -96,6 +98,7 @@ Electron main process
   |
   +-- cancellable child/utility workers (next hardening gate)
         - whisper.cpp STT
+        - Pocket TTS synthesis
         - screen image processing/OCR
         - crash isolation and bounded queues
 ```

@@ -15,9 +15,8 @@
     "doctor": "node src/cli.js --doctor",
     "voice:install": "pwsh -NoProfile -File scripts/install-voice-runtime.ps1",
     "voice:benchmark": "node scripts/benchmark-stt.mjs",
-    "voice:benchmark-tts": "node scripts/benchmark-supertonic.cjs",
-    "voice:smoke-tts": "node scripts/smoke-supertonic-node.mjs",
-    "voice:smoke-tts-electron": "electron scripts/smoke-supertonic-electron.mjs",
+    "voice:benchmark-tts": ".agent\\runtime\\voice\\pocket-tts-3.0.2\\Scripts\\python.exe scripts/benchmark-pocket-tts.py --output .agent/benchmarks/pocket-tts",
+    "voice:smoke-tts": "node scripts/smoke-pocket-tts.mjs",
     "character:smoke": "node scripts/smoke-character-render.mjs",
     "voice:smoke-vad": "npm run build:renderer && electron scripts/smoke-vad-runtime.mjs",
     "test": "node --test",
@@ -31,8 +30,6 @@
     "@ricky0123/vad-web": "0.0.30",
     "dompurify": "3.4.14",
     "marked": "18.0.11",
-    "onnxruntime-web": "1.29.0",
-    "sherpa-onnx-node": "1.13.6",
-    "sherpa-onnx-win-x64": "1.13.6"
+    "onnxruntime-web": "1.29.0"
   }
 }

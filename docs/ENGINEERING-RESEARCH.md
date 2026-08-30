@@ -73,11 +73,13 @@ Measured stack:
 
 - Silero VAD: MIT, small ONNX model, 8 kHz and 16 kHz support.
 - whisper.cpp: MIT, CPU-friendly C/C++ Whisper implementation with quantization.
-- sherpa-onnx 1.13.6: Apache-2.0, exact-pinned native Node runtime.
-- Supertonic 3 INT8: OpenRAIL-M model weights, ten included voices, 31-language support,
-  and a 44.1 kHz output path. The upstream repository is archived, so the provider
-  boundary and artifact manifest are mandatory exit conditions, not optional polish.
-- Kokoro 82M: Apache-2.0 alternative candidate for natural English speech.
+- Pocket TTS 3.0.2: MIT code, a 100M CPU-oriented model, streaming APIs, and
+  voice conditioning. Model weights are CC BY 4.0; the selected Peter Yearsley
+  source recording in the official voice-zero catalog is CC0.
+- Kokoro 82M: Apache-2.0 alternative benchmarked for natural English speech.
+- Chatterbox Nano: MIT alternative benchmarked with zero-shot voice conditioning.
+- Qwen3-TTS 0.6B: Apache-2.0 instruction-controlled candidate rejected for this
+  machine's 8 GB CPU-only envelope.
 - OHF Piper: GPL-3.0 current upstream and an Indonesian id_ID voice. It can be an
   optional compliant adapter, not silently embedded under a permissive claim.
 
@@ -96,16 +98,18 @@ Implemented evidence:
   model startup and is a 0.557 real-time factor.
 - Silero VAD v5, ONNX Runtime Web 1.29.0, and the AudioWorklet load successfully
   from local built assets in a sandboxed hidden Electron smoke test.
-- Supertonic 3 INT8 synthesized the same 115-character operator response across all
-  ten supplied voices on this machine. Real-time factors ranged from 0.413 to 0.559.
-  M2 is the selected operator profile because the official voice documentation
-  describes it as deep, robust, calm, composed, serious, and grounded. At ten
-  synthesis steps and 0.92 speed, the selected 113-character preview measured 0.468
-  RTF. Timing is an engineering measurement, not a claim that automation can judge
-  subjective fit.
-- The exact model archive is 128,774,318 bytes with SHA-256
-  `82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427`.
-- Both Node and Electron-native synthesis smoke tests generate valid PCM WAVE output.
+- Pocket TTS standard with Peter Yearsley measured 88.2 Hz median pitch and 1.211
+  real-time factor on the identical audition line. Its cold load was 23.056 seconds;
+  the desktop therefore warms one persistent worker in the background and reuses it.
+- Pocket's 24-layer model measured 3.492 RTF, Chatterbox Nano measured 12.677 RTF,
+  and full-precision Kokoro voices measured 2.134-2.282 RTF with roughly 200-222 Hz
+  median pitch. Those candidates fail either interaction latency or the requested
+  bass aesthetic on this machine and are not the production engine.
+- The old Supertonic path was removed after live listening exposed that its measured
+  speed did not translate to acceptable naturalness. Subjective audition remains a
+  release gate; latency and pitch metrics alone do not establish voice quality.
+- The Pocket worker smoke test generates a valid bounded PCM16 WAVE payload and the
+  cancellation tests verify that barge-in terminates in-flight inference.
 - Live microphone, echo/barge-in, Indonesian accuracy, memory, and the required
   second-provider comparison remain open exit criteria.
 
@@ -113,9 +117,10 @@ Sources:
 
 - [Silero VAD](https://github.com/snakers4/silero-vad)
 - [whisper.cpp](https://github.com/ggerganov/whisper.cpp)
-- [sherpa-onnx Node examples](https://github.com/k2-fsa/sherpa-onnx/blob/master/nodejs-addon-examples/README.md)
-- [sherpa-onnx Supertonic documentation](https://k2-fsa.github.io/sherpa/onnx/tts/supertonic.html)
-- [Supertonic](https://github.com/supertone-inc/supertonic)
+- [Pocket TTS](https://github.com/kyutai-labs/pocket-tts)
+- [Pocket TTS model card](https://huggingface.co/kyutai/pocket-tts)
+- [Kyutai voice catalog and licenses](https://huggingface.co/kyutai/tts-voices)
+- [Chatterbox](https://github.com/resemble-ai/chatterbox)
 - [Kokoro](https://github.com/hexgrad/kokoro)
 - [Kokoro model card](https://huggingface.co/hexgrad/Kokoro-82M)
 - [OHF Piper](https://github.com/OHF-voice/piper1-gpl)

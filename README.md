@@ -43,9 +43,9 @@ and user-selectable.
   Whisper base model, both verified before installation
 - Voice barge-in orchestration that rejects stale transcripts, interrupts an active
   agent turn, and stops output through the TTS provider boundary
-- Local neural speech through Supertonic 3 INT8 and sherpa-onnx, with ten voice
-  profiles, English/Indonesian selection, bounded sentence chunks, and waveform-
-  driven character motion; typed and spoken prompts both speak their replies
+- Local neural speech through Pocket TTS 3.0.2 with a measured 88 Hz CC0 bass
+  source voice, a persistent isolated inference worker, bounded sentence chunks,
+  and waveform-driven character motion; typed and spoken prompts both speak replies
 - A health/status command and automated unit tests
 
 ## Requirements
@@ -103,7 +103,7 @@ machine.
 | `AGENT_REQUEST_TIMEOUT_MS` | `300000` | Ollama request timeout |
 | `AGENT_COMMAND_TIMEOUT_MS` | `120000` | Default shell-command timeout |
 | `AGENT_APPROVAL_MODE` | `approval` | Startup mode: `approval` or `semi` |
-| `AGENT_VOICE_PROFILE` | `M2` | Supertonic preset; M2 is the deep, grounded operator default |
+| `AGENT_VOICE_PROFILE` | `peter_yearsley` | Pocket TTS voice; the measured bass operator default |
 | `AGENT_LOG_PATH` | `.agent/logs/events.jsonl` | Metadata event log inside workspace |
 
 Example override for the current PowerShell session:
@@ -182,7 +182,6 @@ npm test
 npm run check
 npm run voice:smoke-vad
 npm run voice:smoke-tts
-npm run voice:smoke-tts-electron
 npm run voice:benchmark -- .agent/fixtures/jfk.wav
 npm run voice:benchmark-tts
 ```
