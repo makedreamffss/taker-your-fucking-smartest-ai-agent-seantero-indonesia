@@ -1,7 +1,30 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { SupertonicTts } from "../src/voice/supertonic-tts.js";
+import {
+  SUPERTONIC_PACKED_VOICE_ORDER,
+  SUPERTONIC_VOICE_PROFILES,
+  SupertonicTts,
+} from "../src/voice/supertonic-tts.js";
+
+test("Supertonic packed speaker order follows sherpa's alphabetical JSON packing", () => {
+  assert.deepEqual(SUPERTONIC_PACKED_VOICE_ORDER, [
+    "F1", "F2", "F3", "F4", "F5",
+    "M1", "M2", "M3", "M4", "M5",
+  ]);
+  assert.deepEqual(SUPERTONIC_VOICE_PROFILES, {
+    F1: 0,
+    F2: 1,
+    F3: 2,
+    F4: 3,
+    F5: 4,
+    M1: 5,
+    M2: 6,
+    M3: 7,
+    M4: 8,
+    M5: 9,
+  });
+});
 
 test("Supertonic TTS sanitizes, synthesizes, and plays neural audio", async () => {
   const generated = [];
@@ -34,7 +57,7 @@ test("Supertonic TTS sanitizes, synthesizes, and plays neural audio", async () =
   assert.equal(generated.length, 1);
   assert.equal(generated[0].text, "Result Done. code is in the report.");
   assert.equal(generated[0].enableExternalBuffer, false);
-  assert.equal(generated[0].generationConfig.sid, 1);
+  assert.equal(generated[0].generationConfig.sid, 6);
   assert.equal(generated[0].generationConfig.numSteps, 10);
   assert.equal(played.length, 1);
   assert.equal(playbackStarted, 1);

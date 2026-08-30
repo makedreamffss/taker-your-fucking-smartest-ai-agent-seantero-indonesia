@@ -14,6 +14,8 @@ const modelRoot = path.join(
   "sherpa-onnx-supertonic-3-tts-int8-2026-05-11",
 );
 const outputRoot = path.join(projectRoot, ".agent", "qa", "voice-candidates");
+// sherpa's packer sorts F1-F5 before M1-M5 by filename.
+const packedVoiceOrder = ["F1", "F2", "F3", "F4", "F5", "M1", "M2", "M3", "M4", "M5"];
 const operatorMode = process.argv.includes("--operator");
 const text = operatorMode
   ? "Understood. I will handle it. I will keep the explanation brief and show you the verified result when it is done."
@@ -39,7 +41,7 @@ const tts = new sherpa.OfflineTts({
 
 const results = [];
 const speakerIds = operatorMode
-  ? [1]
+  ? [packedVoiceOrder.indexOf("M2")]
   : Array.from({ length: tts.numSpeakers }, (_, index) => index);
 for (const sid of speakerIds) {
   const generationConfig = new sherpa.GenerationConfig({
@@ -62,7 +64,7 @@ for (const sid of speakerIds) {
   });
   results.push({
     sid,
-    voice: sid < 5 ? `M${sid + 1}` : `F${sid - 4}`,
+    voice: packedVoiceOrder[sid],
     elapsedSeconds: Number(elapsedSeconds.toFixed(3)),
     durationSeconds: Number(durationSeconds.toFixed(3)),
     realTimeFactor: Number((elapsedSeconds / durationSeconds).toFixed(3)),

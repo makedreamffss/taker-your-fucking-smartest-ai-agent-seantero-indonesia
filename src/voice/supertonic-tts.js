@@ -10,18 +10,20 @@ import {
 
 const require = createRequire(import.meta.url);
 
-export const SUPERTONIC_VOICE_PROFILES = Object.freeze({
-  M1: 0,
-  M2: 1,
-  M3: 2,
-  M4: 3,
-  M5: 4,
-  F1: 5,
-  F2: 6,
-  F3: 7,
-  F4: 8,
-  F5: 9,
-});
+// sherpa-onnx's generate_voices_bin.py sorts the source JSON filenames before
+// packing them. Since F*.json sorts before M*.json, voice.bin is ordered
+// F1-F5, then M1-M5. Keep this explicit: a conventional M-first assumption
+// silently selects the opposite gender.
+export const SUPERTONIC_PACKED_VOICE_ORDER = Object.freeze([
+  "F1", "F2", "F3", "F4", "F5",
+  "M1", "M2", "M3", "M4", "M5",
+]);
+
+export const SUPERTONIC_VOICE_PROFILES = Object.freeze(
+  Object.fromEntries(
+    SUPERTONIC_PACKED_VOICE_ORDER.map((profile, sid) => [profile, sid]),
+  ),
+);
 
 export class SupertonicTts {
   #enginePromise = null;
