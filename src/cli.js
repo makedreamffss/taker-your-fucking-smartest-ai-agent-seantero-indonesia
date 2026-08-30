@@ -34,10 +34,9 @@ async function main() {
   );
 
   const terminal = readline.createInterface({ input, output });
-  let activeController = null;
   terminal.on("SIGINT", () => {
-    if (activeController) {
-      activeController.abort();
+    if (runtime.session.isBusy) {
+      runtime.session.interrupt("terminal_sigint");
       output.write("\nCancellation requested for the active turn.\n");
     } else {
       terminal.close();
@@ -63,9 +62,7 @@ async function main() {
       }
 
       try {
-        activeController = new AbortController();
-        const response = await runtime.agent.send(trimmed, {
-          signal: activeController.signal,
+        const response = await runtime.session.send(trimmed, {
           requestApproval: (request) => promptForApproval(terminal, request),
           onEvent(event) {
             if (event.type === "tool_started") {
@@ -80,8 +77,6 @@ async function main() {
         output.write(
           `error> ${error instanceof Error ? error.message : String(error)}\n\n`,
         );
-      } finally {
-        activeController = null;
       }
     }
   } finally {

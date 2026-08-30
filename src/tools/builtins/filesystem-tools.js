@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { isUtf8 } from "node:buffer";
 import { constants as fsConstants } from "node:fs";
 import {
   copyFile,
@@ -6,6 +7,7 @@ import {
   lstat,
   mkdir,
   open,
+  readFile,
   readdir,
   realpath,
   rename,
@@ -147,6 +149,10 @@ export function createFilesystemTools({ workspace }) {
           content: new TextDecoder("utf-8", { fatal: false }).decode(buffer),
           sizeBytes: details.size,
           truncated: details.size > maxBytes,
+          sha256:
+            details.size > maxBytes
+              ? null
+              : createHash("sha256").update(buffer).digest("hex"),
         };
       },
     },
@@ -296,6 +302,174 @@ export function createFilesystemTools({ workspace }) {
           bytesWritten: Buffer.byteLength(content, "utf8"),
           sha256: createHash("sha256").update(content, "utf8").digest("hex"),
           overwritten: exists,
+          backupPath,
+        };
+      },
+    },
+    {
+      name: "edit_text_file",
+      description:
+        "Apply exact, conflict-detecting replacements to a UTF-8 text file anywhere on the machine. A full-file SHA-256 from read_text_file is required.",
+      risk: "write",
+      parameters: {
+        type: "object",
+        additionalProperties: false,
+        required: ["path", "expected_sha256", "edits"],
+        properties: {
+          path: { type: "string", minLength: 1, maxLength: 32_768 },
+          expected_sha256: {
+            type: "string",
+            minLength: 64,
+            maxLength: 64,
+          },
+          edits: {
+            type: "array",
+            minItems: 1,
+            maxItems: 100,
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["old_text", "new_text"],
+              properties: {
+                old_text: {
+                  type: "string",
+                  minLength: 1,
+                  maxLength: MAX_TEXT_BYTES,
+                },
+                new_text: {
+                  type: "string",
+                  maxLength: MAX_TEXT_BYTES,
+                },
+                expected_occurrences: {
+                  type: "integer",
+                  minimum: 1,
+                  maximum: 10_000,
+                },
+              },
+            },
+          },
+          backup: { type: "boolean" },
+        },
+      },
+      describe: ({ path: requestedPath, edits }) =>
+        "Edit " +
+        resolveTarget(requestedPath) +
+        " with " +
+        edits.length +
+        " exact replacement(s)",
+      async assess({ path: requestedPath }) {
+        const target = resolveTarget(requestedPath);
+        const insideWorkspace = await resolvesInside(root, target);
+        return {
+          destructive: true,
+          outsideWorkspace: !insideWorkspace,
+          ambiguous: false,
+          safeInSemiAutonomous: false,
+          reason:
+            "Editing replaces existing file data and requires an exact content hash.",
+        };
+      },
+      async execute({
+        path: requestedPath,
+        expected_sha256: expectedSha256,
+        edits,
+        backup = true,
+      }) {
+        const target = resolveTarget(requestedPath);
+        if (!/^[a-f0-9]{64}$/i.test(expectedSha256)) {
+          throw new ToolInputError(
+            "expected_sha256 must be exactly 64 hexadecimal characters.",
+          );
+        }
+
+        const details = await lstat(target);
+        if (!details.isFile()) {
+          throw new ToolInputError(
+            target + " is not a regular file. Links cannot be edited.",
+          );
+        }
+        if (details.size > MAX_TEXT_BYTES) {
+          throw new ToolInputError(
+            target +
+              " is too large for structured editing (" +
+              details.size +
+              " bytes; maximum " +
+              MAX_TEXT_BYTES +
+              ").",
+          );
+        }
+
+        const beforeBuffer = await readFile(target);
+        if (!isUtf8(beforeBuffer) || beforeBuffer.includes(0)) {
+          throw new ToolInputError(target + " is not valid UTF-8 text.");
+        }
+        const beforeSha256 = hashBytes(beforeBuffer);
+        if (beforeSha256 !== expectedSha256.toLowerCase()) {
+          throw new ToolInputError(
+            "The file changed since it was read. Read it again and retry with the new SHA-256.",
+            { code: "FILE_CONFLICT" },
+          );
+        }
+
+        let content = beforeBuffer.toString("utf8");
+        let replacements = 0;
+        for (let index = 0; index < edits.length; index += 1) {
+          const edit = edits[index];
+          const expectedOccurrences = edit.expected_occurrences ?? 1;
+          const actualOccurrences = countOccurrences(content, edit.old_text);
+          if (actualOccurrences !== expectedOccurrences) {
+            throw new ToolInputError(
+              "Edit " +
+                (index + 1) +
+                " expected " +
+                expectedOccurrences +
+                " occurrence(s), but found " +
+                actualOccurrences +
+                ". No changes were written.",
+              { code: "EDIT_CONFLICT" },
+            );
+          }
+          content = content.split(edit.old_text).join(edit.new_text);
+          replacements += actualOccurrences;
+        }
+
+        const bytesWritten = Buffer.byteLength(content, "utf8");
+        if (bytesWritten > MAX_TEXT_BYTES) {
+          throw new ToolInputError(
+            "The edited file would exceed the " +
+              MAX_TEXT_BYTES +
+              "-byte text limit.",
+          );
+        }
+        const afterSha256 = hashBytes(Buffer.from(content, "utf8"));
+        if (afterSha256 === beforeSha256) {
+          return {
+            path: target,
+            changed: false,
+            replacements,
+            bytesWritten,
+            beforeSha256,
+            afterSha256,
+          };
+        }
+
+        const verificationBuffer = await readFile(target);
+        if (hashBytes(verificationBuffer) !== beforeSha256) {
+          throw new ToolInputError(
+            "The file changed while the edit was being prepared. No changes were written.",
+            { code: "FILE_CONFLICT" },
+          );
+        }
+
+        const backupPath = backup ? await createBackup(root, target) : undefined;
+        await writeUtf8Atomically(target, content, true);
+        return {
+          path: target,
+          changed: true,
+          replacements,
+          bytesWritten,
+          beforeSha256,
+          afterSha256,
           backupPath,
         };
       },
@@ -582,6 +756,46 @@ async function pathExists(candidate) {
   } catch (error) {
     if (error.code === "ENOENT") return false;
     throw error;
+  }
+}
+
+function hashBytes(value) {
+  return createHash("sha256").update(value).digest("hex");
+}
+
+function countOccurrences(content, needle) {
+  let count = 0;
+  let offset = 0;
+  while (true) {
+    const index = content.indexOf(needle, offset);
+    if (index === -1) return count;
+    count += 1;
+    offset = index + needle.length;
+  }
+}
+
+async function writeUtf8Atomically(target, content, targetExists) {
+  const temporaryPath = path.join(
+    path.dirname(target),
+    "." + path.basename(target) + "." + randomUUID() + ".tmp",
+  );
+  let temporaryFile;
+  try {
+    temporaryFile = await open(temporaryPath, "wx");
+    await temporaryFile.writeFile(content, "utf8");
+    await temporaryFile.sync();
+    await temporaryFile.close();
+    temporaryFile = null;
+    try {
+      await rename(temporaryPath, target);
+    } catch (error) {
+      if (!targetExists || process.platform !== "win32") throw error;
+      await rm(target, { force: false });
+      await rename(temporaryPath, target);
+    }
+  } finally {
+    await temporaryFile?.close().catch(() => {});
+    await rm(temporaryPath, { force: true }).catch(() => {});
   }
 }
 

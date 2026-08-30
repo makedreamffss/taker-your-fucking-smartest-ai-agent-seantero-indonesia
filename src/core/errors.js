@@ -30,6 +30,12 @@ export class RequestAbortedError extends AgentError {
   }
 }
 
+export class AgentBusyError extends AgentError {
+  constructor(message = "Another agent turn is already active.", options = {}) {
+    super(message, { ...options, code: "AGENT_BUSY" });
+  }
+}
+
 export class PermissionDeniedError extends AgentError {
   constructor(message, options = {}) {
     super(message, { ...options, code: options.code ?? "PERMISSION_DENIED" });

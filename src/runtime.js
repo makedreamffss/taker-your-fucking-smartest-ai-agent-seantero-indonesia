@@ -1,5 +1,7 @@
 import { Agent } from "./core/agent.js";
+import { ActivityStateStore } from "./core/activity-state.js";
 import { Conversation } from "./core/conversation.js";
+import { SessionController } from "./core/session-controller.js";
 import { buildSystemPrompt } from "./core/system-prompt.js";
 import { JsonlLogger } from "./infra/jsonl-logger.js";
 import { OllamaClient } from "./llm/ollama-client.js";
@@ -38,12 +40,16 @@ export function createRuntime(config, { fetchImpl, logger } = {}) {
     toolRegistry,
     logger: runtimeLogger,
   });
+  const activityState = new ActivityStateStore();
+  const session = new SessionController({ agent, activityState });
 
   return {
     agent,
+    activityState,
     client,
     conversation,
     permissionPolicy,
+    session,
     toolRegistry,
   };
 }

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    >
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Taker Takeover</title>
+    <link rel="stylesheet" href="popover.css">
+  </head>
+  <body>
+    <main id="card" class="card" data-tone="neutral">
+      <header>
+        <span class="mark" aria-hidden="true"></span>
+        <h1 id="title">Taker</h1>
+        <button id="dismiss" class="icon-button" type="button" aria-label="Close">×</button>
+      </header>
+
+      <section id="message-view" hidden>
+        <p id="message"></p>
+      </section>
+
+      <form id="prompt-view" hidden>
+        <textarea
+          id="prompt"
+          rows="4"
+          maxlength="20000"
+          autocomplete="off"
+          aria-label="Message for Taker"
+        ></textarea>
+        <div class="actions">
+          <button class="button button--primary" type="submit">Send</button>
+        </div>
+      </form>
+
+      <section id="approval-view" hidden>
+        <p id="approval-summary" class="summary"></p>
+        <div id="approval-flags" class="flags"></div>
+        <details>
+          <summary>Exact arguments</summary>
+          <pre id="approval-details"></pre>
+        </details>
+        <div class="actions actions--split">
+          <button id="deny" class="button button--quiet" type="button">Deny</button>
+          <button id="approve" class="button button--primary" type="button">Approve once</button>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="popover.js"></script>
+  </body>
+</html>

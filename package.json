@@ -1,16 +1,30 @@
 {
   "name": "taker-takeover",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "A reliable, extensible desktop AI agent runtime backed by Ollama.",
   "type": "module",
+  "main": "src/desktop/main.js",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "start": "node src/cli.js",
+    "build:renderer": "node scripts/build-renderer.mjs",
+    "desktop": "npm run build:renderer && electron src/desktop/main.js",
     "doctor": "node src/cli.js --doctor",
+    "voice:install": "pwsh -NoProfile -File scripts/install-voice-runtime.ps1",
+    "voice:benchmark": "node scripts/benchmark-stt.mjs",
+    "voice:smoke-vad": "npm run build:renderer && electron scripts/smoke-vad-runtime.mjs",
     "test": "node --test",
-    "check": "node --check src/cli.js && node --test"
+    "check": "node --check src/cli.js && node --check src/desktop/main.js && npm run build:renderer && node --test"
+  },
+  "devDependencies": {
+    "electron": "42.10.1",
+    "vite": "8.2.2"
+  },
+  "dependencies": {
+    "@ricky0123/vad-web": "0.0.30",
+    "onnxruntime-web": "1.29.0"
   }
 }

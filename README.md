@@ -5,10 +5,10 @@ agent. It uses `gpt-oss:120b-cloud` through the local Ollama API as its reasonin
 engine while keeping the model, agent loop, tools, permissions, conversation, and
 interface separated.
 
-This milestone is intentionally a terminal application. It now has a machine-wide
-filesystem and arbitrary command-execution arsenal; voice, screen perception, and a
-floating desktop window are still future interface layers. Capability is broad while
-authorization remains explicit and user-selectable.
+This milestone has both the terminal runtime and the first floating desktop shell.
+The shell is deliberately only a tiny transparent blue pet: no permanent panel,
+card, or visible window background. Capability is broad while authorization remains
+explicit and user-selectable.
 
 ## What works now
 
@@ -17,8 +17,11 @@ authorization remains explicit and user-selectable.
 - Native Ollama structured tool calling
 - An unbounded observe/reason/tool/result loop with cancellation and error handling
 - A typed, extensible tool registry
+- A single-turn session controller with interruption and truthful lifecycle events
+- Orthogonal agent, microphone, and speech-output state rather than one fragile enum
 - Machine-wide path inspection, directory listing, text reading, and filename search
 - File and directory creation, atomic text writes with backups, copy, move, and delete
+- Conflict-safe exact text edits guarded by a full-file SHA-256 and occurrence counts
 - Arbitrary PowerShell, CMD, and Bash commands with stdout/stderr capture and timeouts
 - Optional Windows administrator execution through a separate UAC prompt
 - `approval` mode, where every tool call requires confirmation
@@ -28,6 +31,15 @@ authorization remains explicit and user-selectable.
   scripts when the exact prebuilt tool does not exist
 - Tool failures returned to the model so it can correct a request
 - Metadata-only JSONL event logs under `.agent/logs/`
+- A sandboxed Electron pet shell with a transparent 124-by-124 window, no taskbar
+  entry, no Node.js in the renderer, a restrictive CSP, and blocked navigation
+- A compact text/response/approval popover that exists only while interacting
+- Self-hosted Silero VAD v5 in the renderer; model, worklet, and ONNX/WASM assets
+  are bundled locally with a generated SHA-256 manifest
+- Local multilingual speech recognition through pinned whisper.cpp v1.8.6 and the
+  Whisper base model, both verified before installation
+- Voice barge-in orchestration that rejects stale transcripts, interrupts an active
+  agent turn, and stops output through the TTS provider boundary
 - A health/status command and automated unit tests
 
 ## Requirements
@@ -45,11 +57,24 @@ authentication is handled by the signed-in local Ollama installation.
 From PowerShell in this folder:
 
 ```powershell
+npm install
 npm run doctor
 npm start
 ```
 
-At the prompt, try:
+Launch the floating pet:
+
+```powershell
+npm run desktop
+```
+
+Drag the pet to move it. Right-click it for the temporary approval-mode menu or to
+quit. Double-click its face to open the temporary text prompt. Install the verified
+local speech runtime once with `npm run voice:install`, then choose Start listening
+from the right-click menu. Spoken replies are not enabled yet; responses appear in
+the temporary popover.
+
+At the terminal prompt, try:
 
 ```text
 List the files in this workspace and briefly explain the project structure.
@@ -84,8 +109,9 @@ npm start
 ## Full-capability arsenal
 
 The model receives structured tools for `inspect_path`, `list_directory`,
-`read_text_file`, `search_files`, `write_text_file`, `create_directory`, `copy_path`,
-`move_path`, `delete_path`, `get_current_time`, and `execute_command`.
+`read_text_file`, `search_files`, `write_text_file`, `edit_text_file`,
+`create_directory`, `copy_path`, `move_path`, `delete_path`,
+`get_current_time`, and `execute_command`.
 
 Paths may be relative to the workspace or absolute anywhere on the machine. The
 command tool can run arbitrary PowerShell, CMD, or Bash and can request
@@ -98,12 +124,11 @@ the model is instructed to write a helper script or program, inspect and test it
 then execute it. It can also use package managers and installers through a shell after
 the relevant approval.
 
-The folder `C:\Users\aminn\OneDrive\Desktop\Taker Takeover` is exclusive to this
-agent's codebase, generated helper code, logs, tests, and development artifacts. It
-is only the default base for relative paths—not a sandbox around the running agent.
-Absolute paths and command working directories make the tools globally useful across
-the machine. Approval prompts authorize outside-project actions; they do not remove
-those capabilities.
+This repository folder is exclusive to the agent's codebase, generated helper code,
+logs, tests, and development artifacts. It is only the default base for relative
+paths—not a sandbox around the running agent. Absolute paths and command working
+directories make the tools globally useful across the machine. Approval prompts
+authorize outside-project actions; they do not remove those capabilities.
 
 There is no fixed tool-call ceiling. The loop ends when the model finishes, approval
 is denied, the user interrupts, or a real error/blocker occurs. Press Ctrl+C during
@@ -133,17 +158,27 @@ same denied action through another shell or generated helper.
 
 ## Not implemented yet
 
-Voice/STT/TTS, screen capture/OCR, application mouse/keyboard control, persistent
-long-term memory, and the floating always-on-top desktop UI remain future milestones.
+Text-to-speech playback, live microphone/device benchmark coverage, screen
+capture/OCR, application mouse/keyboard control, persistent long-term memory,
+durable autonomous jobs, packaging, and start-on-login remain future milestones.
+The VAD/STT path, voice interruption controller, state-aware pet, text conversation,
+and approval popovers are implemented.
 
 ## Development
 
-No package installation is required. The runtime uses Node's built-in APIs.
+Dependencies are exact-pinned and lockfile-controlled. Voice binaries and models use
+the committed manifest in `assets/voice/manifest.json` and are installed into the
+ignored `.agent/runtime/` directory only after SHA-256 verification.
 
 ```powershell
 npm test
 npm run check
+npm run voice:smoke-vad
+npm run voice:benchmark -- .agent/fixtures/jfk.wav
 ```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for component boundaries and the
-next gated milestones.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md),
+[docs/ENGINEERING-RESEARCH.md](docs/ENGINEERING-RESEARCH.md),
+[docs/SECURITY-MODEL.md](docs/SECURITY-MODEL.md), and
+[docs/DELIVERY-ROADMAP.md](docs/DELIVERY-ROADMAP.md) for the researched design and
+gated delivery plan.

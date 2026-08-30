@@ -166,6 +166,11 @@ export function validateAgainstSchema(value, schema, location = "value") {
       if (!Array.isArray(value)) {
         throw new ToolInputError(`${location} must be an array.`);
       }
+      if (schema.minItems !== undefined && value.length < schema.minItems) {
+        throw new ToolInputError(
+          location + " must contain at least " + schema.minItems + " items.",
+        );
+      }
       if (schema.maxItems !== undefined && value.length > schema.maxItems) {
         throw new ToolInputError(`${location} must contain at most ${schema.maxItems} items.`);
       }
