@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { MOODS, MOTION_CATALOG, MOTION_NAMES, motionForEvent } from "../src/desktop/renderer/character-motion-catalog.js";
 
-test("character exposes at least 200 distinct semantic motion clips", () => {
+test("character exposes 240 addressable procedural motion states", () => {
   assert.ok(MOTION_NAMES.length >= 200);
   assert.equal(MOTION_NAMES.length, 240);
   assert.equal(new Set(MOTION_NAMES).size, MOTION_NAMES.length);
@@ -12,6 +12,8 @@ test("character exposes at least 200 distinct semantic motion clips", () => {
     return JSON.stringify(behavior);
   });
   assert.equal(new Set(signatures).size, MOTION_NAMES.length);
+  assert.equal(new Set(MOTION_NAMES.map((name) => MOTION_CATALOG[name].family)).size, 40);
+  assert.equal(new Set(MOTION_NAMES.map((name) => MOTION_CATALOG[name].phase)).size, 6);
 });
 
 test("moods are independent from tool action clips", () => {

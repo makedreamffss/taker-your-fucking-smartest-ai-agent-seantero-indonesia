@@ -558,8 +558,8 @@ function showPetMenu(window) {
 function showPromptPopover() {
   showPopover({
     mode: "prompt",
-    title: "Ask Taker",
-    placeholder: "What should I do?",
+    title: "Taker",
+    placeholder: "Give Taker a task…",
   });
 }
 
@@ -684,7 +684,7 @@ async function interruptActiveWork(reason) {
 }
 
 function popoverSizeFor(view) {
-  if (view?.mode === "prompt") return { width: 500, height: 178 };
+  if (view?.mode === "prompt") return { width: 520, height: 228 };
   if (view?.mode === "approval") return { width: 560, height: 440 };
   const characters = typeof view?.text === "string" ? view.text.length : 0;
   if (characters <= 220) return { width: 520, height: 224 };

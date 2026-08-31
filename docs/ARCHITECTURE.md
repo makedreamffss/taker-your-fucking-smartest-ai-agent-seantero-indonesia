@@ -61,12 +61,15 @@ the process.
   VAD capture path, WebGL2 pixel-field character, Web Audio playback, and transient
   popover renderer.
 - `src/desktop/renderer/character-motion-catalog.js` defines 40 semantic motion
-  families across six phases (240 addressable clips) and 12 orthogonal moods.
+  families across six phases (240 addressable states) and 12 orthogonal moods. The
+  states are procedural choreography parameters, not hand-authored sprite clips.
 - `src/desktop/renderer/pixel-character-renderer.js` samples the transparent anchor
   into 12,544 GPU points and deforms eye, jaw, crown, edge, scan, and glitch regions
   without using pre-rendered animation swaps.
 - `src/desktop/renderer-audio-player.js` is the bounded request/acknowledgement
   bridge between neural synthesis and sandboxed Web Audio playback.
+- `src/desktop/renderer/prompt-interaction.js` owns testable Enter/Shift+Enter and
+  IME composition rules; the visible form button uses the same native submit path.
 - `src/voice/voice-orchestrator.js` owns speech-cycle generation, stale-result
   rejection, barge-in, agent turns, and the TTS provider boundary.
 - `src/voice/whisper-cpp-stt.js` writes a bounded temporary PCM WAV, launches

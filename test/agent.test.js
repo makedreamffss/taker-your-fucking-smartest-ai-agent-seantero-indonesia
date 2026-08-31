@@ -117,3 +117,54 @@ test("agent has no fixed tool-round ceiling", async () => {
   assert.equal(result.rounds, 13);
   assert.equal(result.toolCalls, 12);
 });
+
+test("agent preserves command activity metadata through completion", async () => {
+  const events = [];
+  let request = 0;
+  const agent = new Agent({
+    client: {
+      async chat() {
+        request += 1;
+        return request === 1
+          ? {
+              message: {
+                role: "assistant",
+                content: "",
+                tool_calls: [{
+                  function: {
+                    name: "execute_command",
+                    arguments: { shell: "powershell", command: "npm test" },
+                  },
+                }],
+              },
+            }
+          : { message: { role: "assistant", content: "done" } };
+      },
+    },
+    conversation: new Conversation({ systemPrompt: "System" }),
+    toolRegistry: {
+      toOllamaTools() { return []; },
+      async execute() {
+        return {
+          ok: true,
+          toolName: "execute_command",
+          content: "passed",
+          durationMs: 1,
+        };
+      },
+    },
+    logger: new NullLogger(),
+  });
+
+  await agent.send("Run tests", { onEvent: (event) => events.push(event) });
+  const started = events.find((event) => event.type === "tool_started");
+  const completed = events.find((event) => event.type === "tool_completed");
+  assert.deepEqual(
+    { shell: started.shell, operation: started.operation },
+    { shell: "powershell", operation: "test.run" },
+  );
+  assert.deepEqual(
+    { shell: completed.shell, operation: completed.operation },
+    { shell: "powershell", operation: "test.run" },
+  );
+});

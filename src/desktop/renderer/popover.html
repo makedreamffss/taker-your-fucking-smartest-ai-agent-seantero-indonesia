@@ -12,8 +12,8 @@
   </head>
   <body>
     <main id="card" class="card" data-tone="neutral">
-      <header>
-        <span class="mark" aria-hidden="true"></span>
+      <header class="topbar">
+        <span class="status-dot" aria-hidden="true"></span>
         <h1 id="title">Taker</h1>
         <button id="dismiss" class="icon-button" type="button" aria-label="Close">×</button>
       </header>
@@ -23,16 +23,22 @@
       </section>
 
       <form id="prompt-view" hidden>
-        <textarea
-          id="prompt"
-          rows="3"
-          maxlength="20000"
-          autocomplete="off"
-          aria-label="Instruction for Taker"
-        ></textarea>
-        <div class="actions">
-          <span class="key-hint">CTRL + ENTER</span>
-          <button class="button button--primary" type="submit">Execute</button>
+        <div class="composer">
+          <textarea
+            id="prompt"
+            rows="2"
+            maxlength="20000"
+            autocomplete="off"
+            aria-label="Message Taker"
+            aria-describedby="prompt-hint"
+          ></textarea>
+          <div class="composer-footer">
+            <span id="prompt-hint" class="key-hint">Enter to send · Shift+Enter for newline</span>
+            <button id="send" class="send-button" type="submit" disabled>
+              <span>Send</span>
+              <span class="send-arrow" aria-hidden="true">→</span>
+            </button>
+          </div>
         </div>
       </form>
 

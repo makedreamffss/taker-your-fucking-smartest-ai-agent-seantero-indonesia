@@ -58,6 +58,35 @@ Sources:
 - [Electron BrowserWindow](https://www.electronjs.org/docs/latest/api/browser-window)
 - [Electron fuses](https://www.electronjs.org/docs/latest/tutorial/fuses)
 
+## Prompt and response surface
+
+Decision: the transient surface behaves like a focused command composer, not a
+decorative sci-fi panel. It uses one flat graphite surface, native typography, one
+restrained blue action color, and an explicit Send button. Plain Enter submits on a
+desktop keyboard, Shift+Enter inserts a newline, Escape dismisses, blank input cannot
+submit, and IME composition/keyCode 229 never triggers a send.
+
+The first implementation failed because its action row extended below a 178-pixel
+window and was silently clipped by `overflow: hidden`. Static markup tests did not
+catch that. The local Chrome DevTools Protocol capture now asserts real rendered
+bounds, focus, enabled/disabled states, and keyboard submission behavior against the
+running Electron window, then saves screenshots for human review.
+
+This follows concrete open-source interaction patterns rather than an invented HUD:
+
+- Vercel's Chatbot composer uses a real submit button, Enter to submit, Shift+Enter
+  for newline, disabled-state checks, and explicit composition guards.
+- NextChat keeps submit-key behavior centralized rather than scattering key handlers.
+- Microsoft PowerToys Command Palette treats Enter as the focused default action and
+  exposes live keyboard hints for available actions.
+
+Sources:
+
+- [Vercel Chatbot prompt input](https://github.com/vercel/chatbot/blob/main/components/ai-elements/prompt-input.tsx)
+- [NextChat chat input handling](https://github.com/ChatGPTNextWeb/NextChat/blob/main/app/components/chat.tsx)
+- [PowerToys Command Palette](https://github.com/microsoft/PowerToys/blob/main/src/modules/cmdpal/README.md)
+- [PowerToys Command Palette interaction specification](https://github.com/microsoft/PowerToys/blob/main/src/modules/cmdpal/doc/initial-sdk-spec/initial-sdk-spec.md)
+
 ## Conversational audio
 
 Decision: separate capture, VAD, STT, and TTS providers behind stable interfaces.

@@ -82,7 +82,10 @@ test("response surface parses and sanitizes Markdown without a raw HTML sink", a
   assert.match(script, /RETURN_DOM_FRAGMENT:\s*true/);
   assert.match(script, /target\.replaceChildren\(fragment\)/);
   assert.doesNotMatch(script, /\.innerHTML\s*=/);
-  assert.match(css, /\.card\s*\{[^}]*border-radius:\s*0/s);
+  assert.match(html, /<button id="send"[^>]*type="submit"/);
+  assert.match(html, /Enter to send · Shift\+Enter for newline/);
+  assert.match(css, /\.composer\s*\{/);
+  assert.doesNotMatch(css, /clip-path|linear-gradient|text-transform:\s*uppercase/);
 });
 
 test("voice playback applies the restrained operator mastering chain", async () => {

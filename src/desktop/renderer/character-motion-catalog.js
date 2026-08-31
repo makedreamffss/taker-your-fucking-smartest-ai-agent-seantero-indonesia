@@ -82,6 +82,7 @@ export const MOTION_CATALOG = Object.freeze(
           name,
           family: base.id,
           phase: stage.id,
+          actionIndex: familyIndex,
           amplitude: clamp(base.amplitude * stage.energy, 0, 0.95),
           speed: clamp(base.speed * stage.tempo, 0.08, 2.8),
           frequency: clamp(base.frequency + phaseIndex * 0.73, 1.5, 19),

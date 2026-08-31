@@ -58,10 +58,11 @@ export class Agent {
 
         for (const toolCall of toolCalls) {
           const toolName = extractToolName(toolCall);
+          const toolActivity = classifyToolActivity(toolName, toolCall);
           await this.#emit(onEvent, {
             type: "tool_started",
             name: toolName,
-            ...classifyToolActivity(toolName, toolCall),
+            ...toolActivity,
           });
           await this.#log("info", "tool_started", { tool: toolName });
 
@@ -86,6 +87,7 @@ export class Agent {
             name: result.toolName,
             ok: result.ok,
             errorCode: result.errorCode,
+            ...toolActivity,
           });
         }
       }

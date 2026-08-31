@@ -34,7 +34,9 @@ and user-selectable.
 - A sandboxed Electron character shell with a transparent 188-by-188 window, no taskbar
   entry, no Node.js in the renderer, a restrictive CSP, and blocked navigation
 - A GPU point-field character made from 12,544 independently displaced pixels,
-  12 composable moods, and 240 named semantic action clips
+  12 composable moods, and 40 semantic motion families across six phases
+- A compact graphite command surface with a visible Send control, Enter-to-send,
+  Shift+Enter newlines, IME-safe keyboard handling, and no decorative HUD chrome
 - A sharp transient operator transcript with GFM Markdown parsed by Marked and
   allowlist-sanitized by DOMPurify before insertion
 - Self-hosted Silero VAD v5 in the renderer; model, worklet, and ONNX/WASM assets

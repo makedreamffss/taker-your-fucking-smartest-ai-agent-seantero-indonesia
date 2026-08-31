@@ -35,6 +35,7 @@ void main() {
   float tilt = u_motion_c.x;
   float pulse = u_motion_c.y;
   float seed = u_motion_c.z;
+  float action = u_motion_c.w;
   float eye_left = exp(-distance(uv, vec2(0.36, 0.47)) * 25.0);
   float eye_right = exp(-distance(uv, vec2(0.64, 0.47)) * 25.0);
   float eyes = max(eye_left, eye_right);
@@ -50,14 +51,32 @@ void main() {
   vec2 position = (uv - 0.5) * 2.0;
   position.y *= -1.0;
   position.x += tilt * (uv.y - 0.5);
-  position += vec2(wave, cross_wave) * amplitude * 0.012;
-  position += vec2(random_x, random_y) * scatter * (0.025 + edge * 0.08);
-  position.x += glitch_gate * glitch * random_x * 0.13;
-  position.x += scan_line * scan * 0.026 * sin(u_time * 8.0 + uv.y * 19.0);
-  position.y -= jaw_region * jaw * (0.015 + 0.008 * sin(u_time * 7.0));
+  position += vec2(wave, cross_wave) * amplitude * 0.034;
+  position += vec2(random_x, random_y) * scatter * (0.038 + edge * 0.13);
+  position.x += glitch_gate * glitch * random_x * 0.21;
+  position.x += scan_line * scan * 0.052 * sin(u_time * 8.0 + uv.y * 19.0);
+  position.y -= jaw_region * jaw * (0.036 + 0.018 * sin(u_time * 7.0));
   float orbit_angle = u_time * speed * 0.7 + seed * 6.283 + id * 0.001;
-  position += vec2(cos(orbit_angle), sin(orbit_angle)) * orbit * edge * 0.022;
-  position += vec2(0.0, crown * sin(u_time * speed * 2.0 + uv.x * 8.0)) * amplitude * 0.012;
+  position += vec2(cos(orbit_angle), sin(orbit_angle)) * orbit * edge * 0.052;
+  position += vec2(0.0, crown * sin(u_time * speed * 2.0 + uv.x * 8.0)) * amplitude * 0.03;
+  float action_region = mod(action, 5.0);
+  float region_crown = 1.0 - step(0.5, abs(action_region - 0.0));
+  float region_eyes = 1.0 - step(0.5, abs(action_region - 1.0));
+  float region_jaw = 1.0 - step(0.5, abs(action_region - 2.0));
+  float region_edge = 1.0 - step(0.5, abs(action_region - 3.0));
+  float region_core = 1.0 - step(0.5, abs(action_region - 4.0));
+  float core = 1.0 - smoothstep(0.08, 0.42, distance(uv, vec2(0.5)));
+  float action_mask = region_crown * crown + region_eyes * eyes +
+    region_jaw * jaw_region + region_edge * edge + region_core * core;
+  float action_signature = sin(
+    u_time * (1.2 + mod(action, 7.0) * 0.31) +
+    uv.x * (4.0 + mod(action, 9.0)) +
+    uv.y * (3.0 + mod(action, 11.0))
+  );
+  position += vec2(
+    action_signature,
+    cos(action_signature * 2.1 + action * 0.37)
+  ) * action_mask * amplitude * 0.025;
   float focus = u_mood_a.x;
   float energy = u_mood_a.y;
   float eye = u_mood_a.z;
@@ -65,20 +84,22 @@ void main() {
   float stability = u_mood_b.x;
   vec3 tint = u_mood_b.yzw;
   position.x *= 1.0 - focus * 0.012;
-  position.y -= eyes * eye * 0.004;
-  position.y -= jaw_region * mouth * 0.008;
-  position += vec2(random_x, random_y) * (1.0 - stability) * 0.035;
-  float breathing = 1.0 + sin(u_time * (0.7 + energy)) * (0.002 + energy * 0.003);
+  position.y -= eyes * eye * 0.014;
+  position.y -= jaw_region * mouth * 0.018;
+  position += vec2(random_x, random_y) * (1.0 - stability) * 0.06;
+  float breathing = 1.0 + sin(u_time * (0.7 + energy)) * (0.005 + energy * 0.006);
   position *= breathing;
   position *= vec2(0.9, 0.94);
   gl_Position = vec4(position, 0.0, 1.0);
   float sensor = eyes * (0.32 + eye * 0.7) * (0.78 + 0.22 * sin(u_time * (3.0 + energy * 3.0)));
   vec3 base = mix(texel.rgb, tint, 0.12 + sensor * 0.52);
   base += tint * sensor * (0.28 + pulse * 0.34);
-  float alpha = texel.a * u_motion_mix;
+  float clean_alpha = smoothstep(0.16, 0.58, texel.a);
+  float alpha = clean_alpha * u_motion_mix;
   v_color = vec4(base, alpha);
   float pixel_size = u_resolution.x / u_grid;
-  gl_PointSize = max(1.0, pixel_size * (0.82 + pulse * 0.18)) * step(0.025, alpha);
+  gl_PointSize = max(1.0, pixel_size * (0.86 + pulse * 0.26));
+  if (alpha < 0.01) gl_Position = vec4(2.0, 2.0, 0.0, 1.0);
 }`;
 
 const FRAGMENT_SHADER = `#version 300 es
@@ -212,7 +233,7 @@ export class PixelCharacterRenderer {
 
   #showFallback(image) {
     if (this.#fallback) {
-      this.#fallback.src = image.src;
+      this.#fallback.src = createCleanFallbackSource(image);
       this.#fallback.removeAttribute("hidden");
     }
     this.#canvas.setAttribute("hidden", "");
@@ -246,12 +267,44 @@ export class PixelCharacterRenderer {
       m.glitch * motionScale,
       Math.max(m.jaw, this.#speechEnergy * 0.92) * motionScale,
     );
-    uniform4(gl, this.#program, "u_motion_c", m.tilt, Math.max(m.pulse, this.#speechEnergy * 0.7), m.seed, 0);
+    uniform4(
+      gl,
+      this.#program,
+      "u_motion_c",
+      m.tilt,
+      Math.max(m.pulse, this.#speechEnergy * 0.7),
+      m.seed,
+      m.actionIndex,
+    );
     uniform4(gl, this.#program, "u_mood_a", mood.focus, mood.energy, mood.eye, mood.jaw);
     uniform4(gl, this.#program, "u_mood_b", mood.stability, mood.tint[0], mood.tint[1], mood.tint[2]);
     gl.drawArrays(gl.POINTS, 0, 112 * 112);
     this.#frame = requestAnimationFrame((time) => this.#draw(time));
   }
+}
+
+function createCleanFallbackSource(image) {
+  const canvas = document.createElement("canvas");
+  canvas.width = image.naturalWidth || image.width;
+  canvas.height = image.naturalHeight || image.height;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) return image.src;
+  context.drawImage(image, 0, 0);
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+  for (let index = 3; index < pixels.data.length; index += 4) {
+    pixels.data[index] = remapAlphaByte(pixels.data[index]);
+  }
+  context.putImageData(pixels, 0, 0);
+  return canvas.toDataURL("image/png");
+}
+
+export function remapAlphaByte(value) {
+  const normalized = Math.min(255, Math.max(0, Number(value) || 0)) / 255;
+  const start = 0.16;
+  const end = 0.58;
+  const position = Math.min(1, Math.max(0, (normalized - start) / (end - start)));
+  const smooth = position * position * (3 - 2 * position);
+  return Math.round(smooth * 255);
 }
 
 async function loadImage(source) {
@@ -266,8 +319,9 @@ function createTexture(gl, image) {
   const texture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
