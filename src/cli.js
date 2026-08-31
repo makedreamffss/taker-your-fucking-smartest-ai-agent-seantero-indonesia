@@ -25,7 +25,7 @@ async function main() {
 
   output.write(
     [
-      "Taker Takeover v0.2",
+      "Taker Takeover v0.3.0",
       "Full-capability agent: global files + PowerShell/CMD/Bash + optional UAC elevation",
       `Approval mode: ${runtime.permissionPolicy.mode}`,
       "Commands: /help, /status, /mode approval, /mode semi, /clear, /exit",

@@ -2,7 +2,7 @@
   "name": "taker-takeover",
   "version": "0.3.0",
   "private": true,
-  "description": "A reliable, extensible local AI agent engine backed by Ollama.",
+  "description": "A headless, approval-gated system agent engine backed by Ollama.",
   "type": "module",
   "main": "src/cli.js",
   "engines": {
