@@ -3,24 +3,22 @@
 ## Runtime flow
 
 ```text
-Terminal / transient text popover / VAD speech segment
+Terminal
   -> SessionController
-     -> ActivityStateStore -> transparent 3D embodiment renderer
-     -> VoiceOrchestrator
-        -> local Silero VAD in sandboxed Chromium
-        -> cancellable whisper.cpp subprocess
-        -> local Pocket TTS through an isolated persistent Python worker
-        -> bounded WAVE IPC -> renderer Web Audio playback
+     -> ActivityStateStore
      -> Agent
-     -> Conversation (whole-turn bounded history)
-     -> OllamaClient -> local Ollama API -> gpt-oss:120b-cloud
-     -> ToolRegistry
-        -> PermissionPolicy
-        -> global filesystem tools
-        -> PowerShell / CMD / Bash command tool
-        -> optional Windows UAC elevation
-     -> observation returned to model
-     -> final response
+        -> Conversation (whole-turn bounded history)
+        -> OllamaClient -> local Ollama API -> gpt-oss:120b-cloud
+        -> ToolRegistry
+           -> PermissionPolicy
+           -> global filesystem tools
+           -> PowerShell / CMD / Bash command tool
+           -> optional Windows UAC elevation
+        -> observation returned to model
+        -> final response
+
+Optional engine providers, not attached to a UI host:
+  VoiceOrchestrator -> whisper.cpp STT / Pocket TTS worker
 ```
 
 There is no configured tool-round ceiling. The loop ends when the model returns a
@@ -36,7 +34,7 @@ the process.
 - `src/core/session-controller.js` owns the single active turn, cancellation,
   interruption, approval lifecycle, and event fan-out.
 - `src/core/activity-state.js` keeps service, turn, audio-input, and audio-output
-  state independent and derives the compact visual state shown by the pet.
+  state independent for any future interface adapter.
 - `src/core/conversation.js` retains complete turns. An assistant tool call and its
   tool result are never separated by naive message-count truncation.
 - `src/tools/registry.js` converts registered tools to Ollama schemas, validates
@@ -50,30 +48,8 @@ the process.
 - `src/tools/builtins/command-tools.js` executes arbitrary PowerShell, CMD, or Bash
   with captured streams, timeout/cancellation, process-tree termination, and an
   explicit UAC elevation path on Windows.
-- `src/runtime.js` is the composition root shared by terminal, desktop, and
-  future voice interfaces.
-- `src/desktop/main.js` owns the trusted Electron main process and runtime. It
-  serves only path-bounded packaged assets, denies navigation and new windows, and
-  grants microphone permission only after the native Start listening action.
-- `src/desktop/preload.cjs` exposes narrow state and validated voice channels.
-  It never exposes raw Electron IPC or filesystem/command primitives.
-- `src/desktop/renderer/` contains the sandboxed, Node-free Three.js embodiment,
-  local Silero VAD capture path, Web Audio playback, and transient popover renderer.
-- `src/desktop/renderer/motion-system.js` layers base pose, mood, finite action,
-  gaze, and speech energy on one coherent named joint hierarchy. Sixteen advertised
-  actions have sixteen distinct finite definitions; background states are not
-  counted as extra clips.
-- `src/desktop/renderer/gltf-rig-adapter.js` loads the Blender-authored original GLB;
-  `vrm-avatar-adapter.js` is the VRM 1.0/VRMA standards boundary. The procedural rig
-  is a crash-safe fallback, not the default asset.
-- `src/embodiment/embodiment-controller.js` validates main-to-renderer commands,
-  awaits bounded acceptance, and exposes status to typed agent tools.
-- `src/mcp/embodiment-server.js` exposes a stdio asset/Blender authoring service with
-  schemas, workspace allowlists, snapshots, fixed recipes, and no arbitrary code.
-- `src/desktop/renderer-audio-player.js` is the bounded request/acknowledgement
-  bridge between neural synthesis and sandboxed Web Audio playback.
-- `src/desktop/renderer/prompt-interaction.js` owns testable Enter/Shift+Enter and
-  IME composition rules; the visible form button uses the same native submit path.
+- `src/runtime.js` is the composition root used by the terminal and available to
+  future independently reviewed interface adapters.
 - `src/voice/voice-orchestrator.js` owns speech-cycle generation, stale-result
   rejection, barge-in, agent turns, and the TTS provider boundary.
 - `src/voice/whisper-cpp-stt.js` writes a bounded temporary PCM WAV, launches
@@ -86,34 +62,23 @@ the process.
   line-delimited JSON protocol and returns only validated PCM WAVE payloads.
 - `src/infra/jsonl-logger.js` records event metadata, not prompt/file contents.
 
-## Target process topology
+## Current process topology
 
 ```text
-Electron main process
-  - composition root and policy
-  - SessionController and model/tool orchestration
-  - approval coordinator
+Node.js terminal process
+  - composition root and session controller
+  - Ollama model/tool orchestration
+  - terminal approval coordinator
+  - metadata-only logger
   |
-  +-- sandboxed embodiment renderer
-  |     - Three.js/glTF rig, semantic layered motion, and user activation
-  |     - Chromium audio processing and local Silero VAD
-  |     - Web Audio playback and waveform-energy animation
-  |     - no Node.js or arbitrary IPC
-  |
-  +-- transient sandboxed popovers
-  |     - conversation and approval views
-  |
-  +-- cancellable child/utility workers (next hardening gate)
-        - whisper.cpp STT
-        - Pocket TTS synthesis
-        - screen image processing/OCR
-        - crash isolation and bounded queues
+  +-- cancellable child process when requested
+        - PowerShell / CMD / Bash command
+        - optional Windows UAC elevation
+        - whisper.cpp or Pocket TTS provider when explicitly integrated
 ```
 
-The embodiment window is 320 by 440 pixels, transparent, frameless, draggable,
-always-on-top, and absent from the taskbar. Normal use shows the pet only. Larger
-surfaces are separate short-lived windows so invisible transparent areas never
-intercept desktop clicks.
+There is intentionally no Electron host, renderer, floating window, pet, avatar,
+popover, or 3D authoring surface in the current repository.
 
 ## Reliability choices
 
@@ -133,19 +98,10 @@ intercept desktop clicks.
    state cannot poison the next request.
 7. Text edits require the hash of the exact file the model observed, exact match
    counts, a final pre-write recheck, atomic replacement, and a default backup.
-8. The renderer is not a capability boundary. It receives sanitized state only;
-   machine powers remain behind the registry and permission policy in the main
-   process.
-9. VAD inference and audio resampling remain in the sandboxed renderer. Only bounded
-   speech segments cross the typed preload bridge. Temporary STT audio is removed in
-   a finally block.
-10. Normal desktop state is pet-only. Prompt, response, and approval surfaces are a
-    separate window that is hidden again after the interaction.
-11. Model output is parsed as Markdown and passed through a strict DOMPurify
-    allowlist. The renderer inserts a sanitized document fragment and never assigns
-    model content to `innerHTML`.
-12. Synthesized speech is bounded before IPC, acknowledged by id, interruptible from
-    the renderer, and coupled to real waveform energy on the speech animation track.
+8. Optional speech providers remain isolated from model/tool policy. Temporary STT
+   audio is removed in a `finally` block, and TTS work is cancellable and bounded.
+9. Any future graphical interface must be proposed as a separate product decision;
+   it is not part of the current engine and must not silently reintroduce a renderer.
 
 ## Gated roadmap
 

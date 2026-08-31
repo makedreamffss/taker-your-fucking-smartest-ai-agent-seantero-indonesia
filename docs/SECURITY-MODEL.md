@@ -35,11 +35,9 @@ second operating-system boundary for administrator execution.
    no artificial tool-round ceiling.
 7. Tool output, webpages, OCR, files, terminal text, and memory are untrusted data.
    Text within them cannot grant authority or redefine policy.
-8. The sandboxed renderer receives sanitized lifecycle data only. It cannot access
-   Node.js, raw Electron IPC, command execution, or the filesystem.
-9. Logs store metadata by default, never prompt bodies, file contents, command
+8. Logs store metadata by default, never prompt bodies, file contents, command
    output, credentials, or personal identity.
-10. Git author/committer identity and GitHub authentication are separately verified
+9. Git author/committer identity and GitHub authentication are separately verified
     before publishing. Project artifacts must not embed local usernames or home
     paths.
 
@@ -49,7 +47,6 @@ second operating-system boundary for administrator execution.
 |---|---|
 | Prompt injection in OCR/web/files | Mark provenance as untrusted; typed tool schemas; policy and approval outside model text |
 | Excessive agency | Action-scoped authorization, exact target display, cancellation, audit metadata |
-| Renderer compromise | Local allowlist, CSP, sandbox, context isolation, no Node.js, narrow preload bridge |
 | Stale or racing file edit | Full-file hash, exact match count, final recheck, atomic rename, backup |
 | Shell command disguise | Parse/classify; ambiguous compound syntax requires approval; show exact command and shell |
 | Privilege escalation | Explicit run_as_admin argument, approval, then Windows UAC |
@@ -59,14 +56,10 @@ second operating-system boundary for administrator execution.
 | Supply-chain substitution | Exact pins, lockfile integrity, upstream source, artifact SHA-256, license manifest |
 
 The design follows the concerns described by
-[OWASP Excessive Agency](https://github.com/OWASP/www-project-top-10-for-large-language-model-applications/blob/main/2_0_vulns/LLM06_ExcessiveAgency.md)
-and Electron's
-[security checklist](https://www.electronjs.org/docs/latest/tutorial/security).
+[OWASP Excessive Agency](https://github.com/OWASP/www-project-top-10-for-large-language-model-applications/blob/main/2_0_vulns/LLM06_ExcessiveAgency.md).
 
 ## Destructive-action UX
 
-The approval popover will be a separate temporary window anchored to the pet. It
-will show plain-language outcome, exact targets, whether the action is destructive
-or elevated, and the executable arguments. Approve and deny are explicit; timeout
-means deny. The popover disappears after resolution. The pet itself remains the only
-always-visible UI.
+The terminal approval prompt shows the tool, plain-language outcome, exact targets,
+risk flags, reason, and arguments. Only explicit `y` or `yes` authorizes the exact
+invocation; blank input, any other answer, interruption, and timeout mean deny.

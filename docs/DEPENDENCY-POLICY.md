@@ -22,23 +22,8 @@ weights.
 
 ## Current direct dependencies
 
-| Dependency | Pin | License | Purpose |
-|---|---:|---|---|
-| @ricky0123/vad-web | 0.0.30 | ISC | Browser microphone VAD adapter |
-| onnxruntime-web | 1.29.0 | MIT | Local Silero ONNX/WASM inference |
-| Electron | 42.10.1 | MIT | Transparent sandboxed pet and popovers |
-| Vite | 8.2.2 | MIT | Reproducible local renderer build |
-| marked | 18.0.11 | MIT | GFM parsing; output is never trusted directly |
-| DOMPurify | 3.4.14 | MPL-2.0 OR Apache-2.0 | Strict response HTML sanitization |
-| Three.js | 0.185.1 | MIT | Transparent 3D renderer and scene graph |
-| @pixiv/three-vrm | 3.5.5 | MIT | VRM 1.0 avatar runtime |
-| @pixiv/three-vrm-animation | 3.5.5 | MIT | VRMA loading and retargeting |
-| @modelcontextprotocol/sdk | 1.30.0 | MIT | Typed stdio embodiment authoring server |
-| Zod | 4.5.4 | MIT | MCP input validation |
-
-The lockfile is committed. npm reported zero known vulnerabilities after
-installation. Vite and Electron are development/runtime-host dependencies; the
-terminal agent core still uses Node built-ins.
+None. The current JavaScript engine uses Node.js built-ins only. The lockfile remains
+committed so dependency drift is visible if packages are introduced later.
 
 ## Installed non-npm artifacts
 
@@ -46,24 +31,19 @@ terminal agent core still uses Node built-ins.
 |---|---|---|---|
 | whisper.cpp Windows x64 | v1.8.6 / commit 23ee035 | MIT | SHA-256 in assets/voice/manifest.json |
 | Whisper base multilingual | revision 98aa99a | MIT | SHA-256 in assets/voice/manifest.json |
-| Silero VAD v5 model | vad-web 0.0.30 package | MIT upstream | npm integrity plus generated build SHA-256 |
 | Pocket TTS runtime | 3.0.2 plus transitive lock | MIT | Exact Python package lock |
 | Pocket TTS English standard | revision d29db79 | CC-BY-4.0 | Revision-pinned by runtime config |
 | Peter Yearsley voice source | voice-zero catalog | CC0-1.0 | SHA-256 in assets/voice/manifest.json |
-| Blender | 5.2.1 LTS / 9e2066aef7ef | GPL-3.0-or-later | Official winget package; external authoring tool |
-| VRM format Blender extension | 4.5.0 | MIT AND GPL-3.0-or-later | Official extension SHA-256 `e5e0f923a0bb11eb1320870b2db8091948dd5b63014510d839016a112e40a35a` |
-| Original Taker GLB | deterministic recipe | LicenseRef-Taker-Project | SHA-256 in adjacent source manifest; no third-party assets |
 
-The voice installer downloads into the ignored .agent directory, verifies the full
-SHA-256 before extraction/use, and re-verifies cached artifacts. The renderer build
-self-hosts the VAD model, worklet, and exact matching ONNX Runtime artifacts. It
-contains no CDN fallback.
+The voice installer downloads into the ignored `.agent` directory, verifies the
+full SHA-256 before extraction/use, and re-verifies cached artifacts. It contains no
+hosted-service fallback.
 
 ## Candidate ledger
 
 | Candidate | Upstream license | Status |
 |---|---|---|
-| Silero VAD | MIT | integrated; live microphone benchmark pending |
+| Silero VAD | MIT | candidate; previous browser adapter was removed with the UI |
 | whisper.cpp | MIT | integrated and English fixture benchmarked |
 | Pocket TTS 3.0.2 | MIT code + CC-BY-4.0 weights | integrated and benchmarked |
 | Kokoro 82M | Apache-2.0 | rejected on measured pitch and latency |
@@ -83,4 +63,7 @@ is downloaded until its artifact manifest is added.
 Pocket TTS runs in a project-local Python 3.12 virtual environment. Its complete
 transitive package set is exact-pinned, model downloads are revision-pinned by the
 admitted package, and the provider can be replaced without changing conversation or
-desktop code.
+agent-loop code.
+
+Blender 5.2.1 LTS and its VRM extension may still exist as machine-wide software,
+but the project no longer invokes, depends on, or packages either one.

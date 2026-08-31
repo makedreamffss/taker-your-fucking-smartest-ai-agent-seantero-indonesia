@@ -13,33 +13,24 @@ has tests and operator documentation.
 - approval and semi-autonomous policies plus Windows UAC
 - unlimited tool rounds with cancellation and operation timeouts
 
-## Gate 1 — interruption and 3D embodiment shell: complete
+## Gate 1 — interruption and conflict-safe editing: complete
 
 - one active turn owned by SessionController
 - abort propagation and truthful lifecycle events
 - independent service, turn, input-audio, and output-audio state
 - conflict-safe exact text editing with backup
-- transparent 320 by 440 Blender-authored 3D embodiment with no visible background
-- sandboxed local renderer, CSP, narrow preload bridge, blocked navigation
-- coherent 19-joint hierarchy with independent pose, mood, action, gaze, and speech
-  tracks; 16 finite action clips captured by a deterministic visual audit
-- typed native and MCP scene/asset/Blender boundaries; no arbitrary Blender code
 
-Exit evidence: 71 tests pass; Chromium runtime capture confirms transparent WebGL2,
-non-static frames, and the authored GLB. The action auditor captured all 16 named
-clips and produced a reviewed contact sheet.
+The rejected Electron/3D interface, its authoring bridge, and all associated tests
+and assets were removed. UI work is not an active delivery gate.
 
 ## Gate 2 — audio capture, VAD, and STT: in progress
 
-- native-menu-gated Chromium capture with echo cancellation, noise suppression, and
-  AGC is wired; real-device validation remains
-- Silero VAD v5, AudioWorklet, matching ONNX/WASM, and local asset hashes are wired
 - multilingual whisper.cpp base STT is pinned, checksum-installed, cancellable, and
   removes temporary audio after every segment
 - an 11-second English fixture transcribed correctly in 6.124 seconds including
   model/process startup, a 0.557 real-time factor
-- renderer-to-VAD and VAD-to-STT lifecycle/error paths are tested
 - enumerate and persist an explicit microphone choice
+- select and implement a non-UI microphone capture host
 - benchmark sherpa-onnx as the required second STT candidate
 - English and Indonesian corpus tests
 - push-to-talk fallback and visible listening state
@@ -87,20 +78,22 @@ tests, safe failure when focus or UI tree changes.
 - FTS5 search, provenance, confidence, retention, edit, export, and deletion
 - durable task/run/attempt schema, leases, idempotency, retry schedule, recovery
 - approval revisions persist across restart without broadening authorization
-- inspectable task and memory popovers
+- inspectable terminal/API task and memory controls
 
 Exit criteria: crash-injection and migration tests, corrupt-store recovery drill,
 retention/deletion verification, no multi-connection WAL on the current SQLite.
 
-## Gate 7 — transient conversation UI and packaging
+## UI direction — intentionally removed
 
-- text/response/approval popover anchored to the pet and dismissed when idle is
-  implemented
-- approval view displays exact arguments and resolves a single immutable request
-- keyboard activation and reduced-motion support are implemented
-- multi-monitor position persistence
-- signed/reproducible packaging path, Electron fuses, ASAR integrity, SBOM
-- per-user start-on-login and single-instance recovery
+The desktop pet, 3D embodiment, Electron renderer, transient popovers, Blender
+authoring pipeline, and embodiment MCP were rejected and removed. A future UI is a
+new design decision, not a continuation of that implementation.
 
-Exit criteria: cold-start, upgrade, crash-loop, offline, and login-start tests. The
-normal desktop remains visually only the pet.
+## Gate 7 — headless packaging and startup
+
+- signed/reproducible Node.js packaging path and SBOM
+- per-user start-on-login for the headless runtime
+- single-instance recovery and terminal/API attachment
+
+Exit criteria: cold-start, upgrade, crash-loop, offline, and login-start tests with
+no graphical interface bundled.

@@ -1,13 +1,12 @@
 # Taker Takeover
 
-Taker Takeover is the first working foundation for an always-available desktop AI
-agent. It uses `gpt-oss:120b-cloud` through the local Ollama API as its reasoning
+Taker Takeover is a headless, terminal-operated local AI agent engine. It uses
+`gpt-oss:120b-cloud` through the local Ollama API as its reasoning
 engine while keeping the model, agent loop, tools, permissions, conversation, and
 interface separated.
 
-This milestone has both the terminal runtime and a floating 3D embodiment. The
-visible agent is one transparent, articulated, non-branded construct with no
-permanent panel or visible window background. Capability is broad while
+The rejected desktop, pet, and 3D embodiment experiments have been removed. The
+current product surface is the terminal runtime. Capability is broad while
 authorization remains explicit and user-selectable.
 
 ## What works now
@@ -31,27 +30,13 @@ authorization remains explicit and user-selectable.
   scripts when the exact prebuilt tool does not exist
 - Tool failures returned to the model so it can correct a request
 - Metadata-only JSONL event logs under `.agent/logs/`
-- A sandboxed Electron embodiment shell with a transparent 320-by-440 window, no taskbar
-  entry, no Node.js in the renderer, a restrictive CSP, and blocked navigation
-- A Three.js WebGL embodiment using one coherent 19-joint hierarchy, five independent
-  motion tracks, six moods, and 16 honest finite action clips including jump, roll,
-  dance, point, salute, think, wave, and work
-- A deterministic Blender 5.2 LTS authoring recipe, project-local GLB source/output,
-  asset provenance checks, recovery snapshots, VRM/VRMA adapters, and typed native
-  plus MCP authoring tools with no model-visible raw Blender Python endpoint
-- A compact graphite command surface with a visible Send control, Enter-to-send,
-  Shift+Enter newlines, IME-safe keyboard handling, and no decorative HUD chrome
-- A sharp transient operator transcript with GFM Markdown parsed by Marked and
-  allowlist-sanitized by DOMPurify before insertion
-- Self-hosted Silero VAD v5 in the renderer; model, worklet, and ONNX/WASM assets
-  are bundled locally with a generated SHA-256 manifest
 - Local multilingual speech recognition through pinned whisper.cpp v1.8.6 and the
   Whisper base model, both verified before installation
 - Voice barge-in orchestration that rejects stale transcripts, interrupts an active
   agent turn, and stops output through the TTS provider boundary
-- Local neural speech through Pocket TTS 3.0.2 with a measured 88 Hz CC0 bass
-  source voice, a persistent isolated inference worker, bounded sentence chunks,
-  and waveform-driven character motion; typed and spoken prompts both speak replies
+- Local neural speech through Pocket TTS 3.0.2 with a persistent isolated inference
+  worker and bounded sentence chunks; provider code is preserved independently of
+  any graphical playback surface
 - A health/status command and automated unit tests
 
 ## Requirements
@@ -60,8 +45,6 @@ authorization remains explicit and user-selectable.
 - Node.js 20 or newer (Node 24 is already installed on this machine)
 - Ollama running locally
 - The `gpt-oss:120b-cloud` model available and Ollama signed in
-- Blender 5.2 LTS only when rebuilding/customizing the authored 3D asset (the
-  packaged GLB runs without Blender)
 
 Ollama's local server listens on `http://127.0.0.1:11434` by default. Cloud-model
 authentication is handled by the signed-in local Ollama installation.
@@ -75,18 +58,6 @@ npm install
 npm run doctor
 npm start
 ```
-
-Launch the floating embodiment:
-
-```powershell
-npm run desktop
-```
-
-Drag the embodiment to move it. Right-click for approval controls, voice capture,
-interruption, or quit. Double-click it to open the transient command surface. Install
-the verified local speech runtime once with `npm run voice:install`, then choose
-Start listening from the right-click menu. Replies to both typed and spoken prompts
-are shown as a formatted transcript and spoken by the local neural voice.
 
 At the terminal prompt, try:
 
@@ -127,18 +98,6 @@ The model receives structured tools for `inspect_path`, `list_directory`,
 `read_text_file`, `search_files`, `write_text_file`, `edit_text_file`,
 `create_directory`, `copy_path`, `move_path`, `delete_path`,
 `get_current_time`, and `execute_command`.
-
-When the desktop host is active it also receives `embodiment_inspect`,
-`embodiment_play_action`, `embodiment_set_mood`, `embodiment_look_at`, and
-`embodiment_set_presence`. Authoring tools list/inspect project assets, inspect
-Blender, and rebuild the starter GLB from the fixed recipe after approval and a
-recovery snapshot. The standalone stdio bridge runs with `npm run mcp:embodiment`.
-
-Rebuild the original starter asset with the installed Blender 5.2 LTS runtime:
-
-```powershell
-npm run build:embodiment
-```
 
 Paths may be relative to the workspace or absolute anywhere on the machine. The
 command tool can run arbitrary PowerShell, CMD, or Bash and can request
@@ -185,11 +144,11 @@ same denied action through another shell or generated helper.
 
 ## Not implemented yet
 
-Live microphone/device benchmark coverage, screen capture/OCR, application
-mouse/keyboard control, persistent long-term memory,
-durable autonomous jobs, packaging, and start-on-login remain future milestones.
-The VAD/STT/TTS path, voice interruption controller, dynamic character, text
-conversation, and approval surfaces are implemented.
+Live microphone/device integration, screen capture/OCR, application mouse/keyboard
+control, persistent long-term memory, durable autonomous jobs, packaging, and
+start-on-login remain future milestones. STT/TTS providers and the voice
+interruption controller exist as engine modules, but no graphical or microphone
+host is currently connected to them.
 
 ## Development
 
@@ -200,7 +159,6 @@ ignored `.agent/runtime/` directory only after SHA-256 verification.
 ```powershell
 npm test
 npm run check
-npm run voice:smoke-vad
 npm run voice:smoke-tts
 npm run voice:benchmark -- .agent/fixtures/jfk.wav
 npm run voice:benchmark-tts

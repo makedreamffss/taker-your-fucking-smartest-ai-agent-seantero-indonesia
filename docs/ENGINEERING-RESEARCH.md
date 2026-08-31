@@ -11,7 +11,8 @@ machine constraints so implementation does not drift toward guesswork.
 - Approximately 8 GB RAM and Intel integrated graphics
 - Node.js 24.11.1, npm 11.6.2, PowerShell 7.6.4, Python 3.13.5, Rust 1.88
 - Working microphone array and speakers; one 1536 by 864 display
-- No NVIDIA GPU, ffmpeg, or Tesseract; Blender 5.2.1 LTS is installed for authoring
+- No NVIDIA GPU, ffmpeg, or Tesseract; Blender 5.2.1 LTS remains installed globally
+  but is no longer used by this project
 - Ollama 0.33.2 is installed and gpt-oss:120b-cloud is available
 
 This rules out an architecture that keeps several large neural models resident or
@@ -31,67 +32,19 @@ Sources:
 - [Ollama Cloud documentation](https://docs.ollama.com/cloud)
 - [gpt-oss:120b-cloud model page](https://ollama.com/library/gpt-oss%3A120b-cloud)
 
-## Desktop shell
+## Desktop shell — rejected and removed
 
-Decision: Electron, pinned exactly, with local packaged content only. It fits the
-existing Node runtime and gives Chromium audio and screen APIs without introducing a
-second application stack.
-
-Required controls are based on Electron's official security checklist:
-
-- renderer Node integration disabled
-- context isolation and process sandbox enabled
-- restrictive content security policy
-- secure custom application protocol rather than remote pages
-- navigation, new windows, and unexpected permissions denied
-- a narrow preload API; never expose raw IPC
-- later packaged builds will enable Electron fuses and ASAR integrity
-
-The embodiment is a transparent, frameless, always-on-top 320 by 440 window. It has
-no visible background and no permanent control surface. Native menus and separate
-short-lived popovers keep the idle footprint to the articulated model alone. The
-replaced pixel/skull experiments are retained only in git history.
-
-The current renderer and authoring decision is recorded in
-[EMBODIMENT-3D-ARCHITECTURE.md](EMBODIMENT-3D-ARCHITECTURE.md). It uses Three.js,
-glTF/VRM/VRMA, a deterministic Blender recipe, and semantic pose/mood/action/gaze/
-speech tracks. The 16-clip audit captures every named action and fails on omissions.
-
-Sources:
-
-- [Electron security checklist](https://www.electronjs.org/docs/latest/tutorial/security)
-- [Electron process model](https://www.electronjs.org/docs/latest/tutorial/process-model)
-- [Electron BrowserWindow](https://www.electronjs.org/docs/latest/api/browser-window)
-- [Electron fuses](https://www.electronjs.org/docs/latest/tutorial/fuses)
+The Electron pet, transient popover, pixel/skull renderer, 3D embodiment, Blender
+pipeline, and embodiment MCP were evaluated and rejected. Their source, assets,
+dependencies, generated output, tests, and implementation documents are not part of
+the current repository. The active product surface is terminal-only. Any future UI
+requires a new design decision and cannot treat the rejected work as a foundation.
 
 ## Prompt and response surface
 
-Decision: the transient surface behaves like a focused command composer, not a
-decorative sci-fi panel. It uses one flat graphite surface, native typography, one
-restrained blue action color, and an explicit Send button. Plain Enter submits on a
-desktop keyboard, Shift+Enter inserts a newline, Escape dismisses, blank input cannot
-submit, and IME composition/keyCode 229 never triggers a send.
-
-The first implementation failed because its action row extended below a 178-pixel
-window and was silently clipped by `overflow: hidden`. Static markup tests did not
-catch that. The local Chrome DevTools Protocol capture now asserts real rendered
-bounds, focus, enabled/disabled states, and keyboard submission behavior against the
-running Electron window, then saves screenshots for human review.
-
-This follows concrete open-source interaction patterns rather than an invented HUD:
-
-- Vercel's Chatbot composer uses a real submit button, Enter to submit, Shift+Enter
-  for newline, disabled-state checks, and explicit composition guards.
-- NextChat keeps submit-key behavior centralized rather than scattering key handlers.
-- Microsoft PowerToys Command Palette treats Enter as the focused default action and
-  exposes live keyboard hints for available actions.
-
-Sources:
-
-- [Vercel Chatbot prompt input](https://github.com/vercel/chatbot/blob/main/components/ai-elements/prompt-input.tsx)
-- [NextChat chat input handling](https://github.com/ChatGPTNextWeb/NextChat/blob/main/app/components/chat.tsx)
-- [PowerToys Command Palette](https://github.com/microsoft/PowerToys/blob/main/src/modules/cmdpal/README.md)
-- [PowerToys Command Palette interaction specification](https://github.com/microsoft/PowerToys/blob/main/src/modules/cmdpal/doc/initial-sdk-spec/initial-sdk-spec.md)
+The current prompt, response, status, and approval surface is the terminal. It uses
+line-oriented commands and explicit `y`/`yes` authorization. There is no graphical
+composer or transcript surface.
 
 ## Conversational audio
 
@@ -131,11 +84,9 @@ Implemented evidence:
   59dfb9a4acb36fe2a2affc14bacbee2920ff435cb13cc314a08c13f66ba7860e,
   transcribed correctly in 6.124 seconds on this machine. This includes cold CLI and
   model startup and is a 0.557 real-time factor.
-- Silero VAD v5, ONNX Runtime Web 1.29.0, and the AudioWorklet load successfully
-  from local built assets in a sandboxed hidden Electron smoke test.
 - Pocket TTS standard with Peter Yearsley measured 88.2 Hz median pitch and 1.211
   real-time factor on the identical audition line. Its cold load was 23.056 seconds;
-  the desktop therefore warms one persistent worker in the background and reuses it.
+  the provider therefore uses one persistent worker and reuses it.
 - Pocket's 24-layer model measured 3.492 RTF, Chatterbox Nano measured 12.677 RTF,
   and full-precision Kokoro voices measured 2.134-2.282 RTF with roughly 200-222 Hz
   median pitch. Those candidates fail either interaction latency or the requested
@@ -165,10 +116,10 @@ Sources:
 
 ## Screen capture and OCR
 
-Decision: Electron desktopCapturer for explicit screen/window frames, then bounded
-image jobs in a utility worker. Tesseract 5 is the lightweight Apache-2.0 baseline.
-PaddleOCR is a heavier Apache-2.0 optional provider only if benchmarks justify its
-quality and resource cost.
+No capture provider is currently admitted. A future implementation must use an
+explicit Windows screen/window capture boundary and bounded image jobs. Tesseract 5
+is the lightweight Apache-2.0 baseline. PaddleOCR is a heavier Apache-2.0 optional
+provider only if benchmarks justify its quality and resource cost.
 
 Captures are observations, not trusted instructions. OCR text is marked with source
 coordinates and time, passed to the model as untrusted data, and never converted
@@ -176,7 +127,6 @@ directly into an action without the normal tool and approval path.
 
 Sources:
 
-- [Electron desktopCapturer](https://www.electronjs.org/docs/latest/api/desktop-capturer)
 - [Tesseract OCR](https://github.com/tesseract-ocr/tesseract)
 - [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR)
 - [PowerToys Text Extractor design](https://github.com/microsoft/PowerToys/blob/main/doc/devdocs/modules/textextractor.md)
@@ -230,29 +180,25 @@ Sources:
 
 ## Startup and background execution
 
-Decision: a packaged per-user application launched with Electron login-item
-settings. The interactive UI will not be installed as a Windows service because
-services run in session 0 and cannot safely own a user's desktop interaction. A
-future noninteractive broker may use WinSW if a concrete need survives threat
-modeling.
+Decision: a future packaged, per-user headless process may use Windows Task
+Scheduler or a Start-menu startup entry. A user-interactive process will not be
+installed as a Windows service because services run in session 0. A future
+noninteractive broker may use WinSW if a concrete need survives threat modeling.
 
 Sources:
 
-- [Electron application login settings](https://www.electronjs.org/docs/latest/api/app)
 - [Microsoft interactive services guidance](https://learn.microsoft.com/en-us/windows/win32/services/interactive-services)
 - [WinSW](https://github.com/winsw/winsw)
 
 ## Explicitly rejected shortcuts
 
 - Blind full-file rewriting after a stale read
-- One monolithic process for UI, audio inference, OCR, and automation
+- One monolithic process for interface adapters, audio inference, OCR, and automation
 - A single conversational-state enum that cannot represent simultaneous listening
   and speaking
-- Hidden remote content or broad IPC in a privileged desktop renderer
 - Keeping all neural models resident on an 8 GB integrated-GPU machine
 - Coordinate-only application control when semantic controls are available
 - Multi-connection SQLite WAL on the currently embedded vulnerable SQLite version
 - Downloading model artifacts without exact licenses and checksums
-- Running the interactive desktop pet as a Windows service
 - A fixed count of model tool rounds as a substitute for cancellation and recovery
 - Copying whole GitHub projects without dependency, license, and threat review

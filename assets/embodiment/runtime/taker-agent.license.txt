@@ -1,1 +1,0 @@
-Original project-authored Taker embodiment. No third-party meshes, textures, motions, or likenesses are included. Distribution terms follow the repository license; the repository owner must declare that license before redistribution.
