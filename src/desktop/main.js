@@ -21,6 +21,10 @@ import { WhisperCppStt } from "../voice/whisper-cpp-stt.js";
 import { RendererAudioPlayer } from "./renderer-audio-player.js";
 import { RendererVadAdapter } from "./renderer-vad-adapter.js";
 import {
+  MOTION_SHOWCASE_FRAMES,
+  MOTION_SHOWCASE_INTERVAL_MS,
+} from "./motion-showcase.js";
+import {
   createPetWindowOptions,
   createPopoverWindowOptions,
   isTrustedAppUrl,
@@ -71,6 +75,8 @@ let popoverView = null;
 let popoverHideTimer = null;
 let pendingApproval = null;
 let petDrag = null;
+let motionShowcaseTimer = null;
+let motionShowcaseIndex = 0;
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 if (!hasSingleInstanceLock) app.quit();
@@ -102,6 +108,9 @@ app.whenReady().then(async () => {
   ]);
   positionPet(petWindow);
   petWindow.showInactive();
+  if (process.argv.includes("--motion-showcase")) {
+    setTimeout(startMotionShowcase, 500);
+  }
 });
 
 app.on("window-all-closed", () => {
@@ -109,6 +118,7 @@ app.on("window-all-closed", () => {
 });
 
 app.on("before-quit", () => {
+  stopMotionShowcase({ notifyRenderer: false });
   microphoneAuthorized = false;
   textSpeechController?.abort("application_quit");
   void voice?.stop("application_quit");
@@ -536,6 +546,12 @@ function showPetMenu(window) {
         runtime.activityState.snapshot.audioOutput !== "silent",
       click: () => void interruptActiveWork("user_interruption"),
     },
+    {
+      label: motionShowcaseTimer
+        ? "Stop motion showcase"
+        : `Preview all ${MOTION_SHOWCASE_FRAMES.length} motion states`,
+      click: motionShowcaseTimer ? stopMotionShowcase : startMotionShowcase,
+    },
     { type: "separator" },
     {
       label: "Approve every tool",
@@ -553,6 +569,39 @@ function showPetMenu(window) {
     { label: "Quit", click: () => app.quit() },
   ]);
   menu.popup({ window });
+}
+
+function startMotionShowcase() {
+  stopMotionShowcase();
+  hidePopover();
+  motionShowcaseIndex = 0;
+  const advance = () => {
+    if (!petWindow || petWindow.isDestroyed()) {
+      stopMotionShowcase({ notifyRenderer: false });
+      return;
+    }
+    const frame = MOTION_SHOWCASE_FRAMES[motionShowcaseIndex];
+    if (!frame) {
+      console.info(
+        `[character] motion showcase completed: ${MOTION_SHOWCASE_FRAMES.length} states`,
+      );
+      stopMotionShowcase();
+      return;
+    }
+    petWindow.webContents.send("character:preview", frame);
+    motionShowcaseIndex += 1;
+  };
+  advance();
+  motionShowcaseTimer = setInterval(advance, MOTION_SHOWCASE_INTERVAL_MS);
+}
+
+function stopMotionShowcase({ notifyRenderer = true } = {}) {
+  if (motionShowcaseTimer !== null) clearInterval(motionShowcaseTimer);
+  motionShowcaseTimer = null;
+  motionShowcaseIndex = 0;
+  if (notifyRenderer && petWindow && !petWindow.isDestroyed()) {
+    petWindow.webContents.send("character:preview", { type: "end" });
+  }
 }
 
 function showPromptPopover() {

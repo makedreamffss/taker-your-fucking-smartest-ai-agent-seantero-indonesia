@@ -126,6 +126,7 @@ export class PixelCharacterRenderer {
   #mood = MOODS[DEFAULT_MOOD];
   #motionMix = 0;
   #speechEnergy = 0;
+  #previewBoost = 1;
   #reduceMotion;
 
   constructor({ canvas, fallback }) {
@@ -191,6 +192,19 @@ export class PixelCharacterRenderer {
     return true;
   }
 
+  preview(name) {
+    if (!this.play(name)) return false;
+    this.#previewBoost = 2.35;
+    this.#motionMix = 1;
+    return true;
+  }
+
+  endPreview() {
+    this.#previewBoost = 1;
+    this.setMood(DEFAULT_MOOD);
+    this.play("idle.observe.sustain");
+  }
+
   handleEvent(event) {
     const motion = motionForEvent(event);
     if (motion) this.play(motion);
@@ -245,7 +259,12 @@ export class PixelCharacterRenderer {
     this.resize();
     const elapsed = (now - this.#startedAt) / 1000;
     this.#motionMix += (1 - this.#motionMix) * 0.09;
-    const motionScale = this.#reduceMotion ? 0.18 : 1;
+    const motionScale =
+      this.#previewBoost > 1
+        ? this.#previewBoost
+        : this.#reduceMotion
+          ? 0.18
+          : 1;
     const m = this.#motion;
     const mood = this.#mood;
     gl.clearColor(0, 0, 0, 0);

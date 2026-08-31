@@ -18,6 +18,7 @@
     "voice:benchmark-tts": ".agent\\runtime\\voice\\pocket-tts-3.0.2\\Scripts\\python.exe scripts/benchmark-pocket-tts.py --output .agent/benchmarks/pocket-tts",
     "voice:smoke-tts": "node scripts/smoke-pocket-tts.mjs",
     "character:smoke": "node scripts/smoke-character-render.mjs",
+    "character:capture-showcase": "node scripts/capture-motion-showcase.mjs",
     "desktop:capture": "node scripts/capture-desktop-ui.mjs",
     "voice:smoke-vad": "npm run build:renderer && electron scripts/smoke-vad-runtime.mjs",
     "test": "node --test",

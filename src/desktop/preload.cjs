@@ -21,6 +21,14 @@ contextBridge.exposeInMainWorld(
       ipcRenderer.on("character:event", listener);
       return () => ipcRenderer.removeListener("character:event", listener);
     },
+    onMotionPreview(callback) {
+      if (typeof callback !== "function") {
+        throw new TypeError("onMotionPreview requires a callback.");
+      }
+      const listener = (_event, payload) => callback(payload);
+      ipcRenderer.on("character:preview", listener);
+      return () => ipcRenderer.removeListener("character:preview", listener);
+    },
     drag: Object.freeze({
       start(screenX, screenY) {
         ipcRenderer.send("pet:drag-start", safePoint(screenX, screenY));

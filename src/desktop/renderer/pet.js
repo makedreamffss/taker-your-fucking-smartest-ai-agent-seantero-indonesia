@@ -5,6 +5,7 @@ import { PixelCharacterRenderer } from "./pixel-character-renderer.js";
 import { VoicePlayback } from "./voice-playback.js";
 
 const pet = document.getElementById("pet");
+const motionProgress = document.getElementById("motion-progress");
 const renderer = new PixelCharacterRenderer({
   canvas: document.getElementById("character"),
   fallback: document.getElementById("character-fallback"),
@@ -32,6 +33,28 @@ window.taker.onActivityState((event) => {
 });
 
 window.taker.onCharacterEvent((event) => renderer.handleEvent(event));
+window.taker.onMotionPreview((preview) => {
+  if (preview?.type === "end") {
+    motionProgress.hidden = true;
+    motionProgress.textContent = "";
+    renderer.endPreview();
+    return;
+  }
+  if (
+    preview?.type !== "state" ||
+    typeof preview.name !== "string" ||
+    !Number.isSafeInteger(preview.index) ||
+    !Number.isSafeInteger(preview.total) ||
+    preview.index < 0 ||
+    preview.total < 1 ||
+    preview.index >= preview.total ||
+    !renderer.preview(preview.name)
+  ) {
+    return;
+  }
+  motionProgress.textContent = `${preview.index + 1}/${preview.total}  ${preview.name}`;
+  motionProgress.hidden = false;
+});
 window.addEventListener("resize", () => renderer.resize());
 window.addEventListener("beforeunload", () => renderer.destroy());
 
