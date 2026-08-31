@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import {
   copyFile,
+  cp,
   mkdir,
   readFile,
   writeFile,
@@ -16,6 +17,8 @@ const projectRoot = path.dirname(
 const sourceRoot = path.join(projectRoot, "src", "desktop", "renderer");
 const outputRoot = path.join(projectRoot, "dist", "desktop", "renderer");
 const vadOutput = path.join(outputRoot, "vad");
+const embodimentSource = path.join(projectRoot, "assets", "embodiment", "runtime");
+const embodimentOutput = path.join(outputRoot, "embodiment");
 
 await build({
   root: sourceRoot,
@@ -37,6 +40,7 @@ await build({
 });
 
 await mkdir(vadOutput, { recursive: true });
+await cp(embodimentSource, embodimentOutput, { recursive: true });
 const artifacts = [
   {
     source: path.join(

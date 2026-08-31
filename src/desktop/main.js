@@ -14,16 +14,14 @@ import {
 } from "electron";
 
 import { loadConfig } from "../config.js";
+import { EmbodimentController } from "../embodiment/embodiment-controller.js";
+import { EMBODIMENT_ACTIONS } from "../embodiment/contracts.js";
 import { createRuntime } from "../runtime.js";
 import { PocketTts } from "../voice/pocket-tts.js";
 import { VoiceOrchestrator } from "../voice/voice-orchestrator.js";
 import { WhisperCppStt } from "../voice/whisper-cpp-stt.js";
 import { RendererAudioPlayer } from "./renderer-audio-player.js";
 import { RendererVadAdapter } from "./renderer-vad-adapter.js";
-import {
-  MOTION_SHOWCASE_FRAMES,
-  MOTION_SHOWCASE_INTERVAL_MS,
-} from "./motion-showcase.js";
 import {
   createPetWindowOptions,
   createPopoverWindowOptions,
@@ -75,8 +73,9 @@ let popoverView = null;
 let popoverHideTimer = null;
 let pendingApproval = null;
 let petDrag = null;
-let motionShowcaseTimer = null;
-let motionShowcaseIndex = 0;
+let actionShowcaseTimer = null;
+let actionShowcaseIndex = 0;
+const embodimentController = new EmbodimentController();
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 if (!hasSingleInstanceLock) app.quit();
@@ -91,7 +90,7 @@ app.whenReady().then(async () => {
   registerLocalProtocol();
 
   const config = loadConfig(process.env, process.cwd());
-  runtime = createRuntime(config);
+  runtime = createRuntime(config, { embodimentController });
   petWindow = createPetWindow();
   popoverWindow = createPopoverWindow();
   installSessionGuards();
@@ -108,8 +107,12 @@ app.whenReady().then(async () => {
   ]);
   positionPet(petWindow);
   petWindow.showInactive();
-  if (process.argv.includes("--motion-showcase")) {
-    setTimeout(startMotionShowcase, 500);
+  if (
+    process.argv.includes("--action-showcase") ||
+    process.argv.includes("--motion-showcase")
+  ) {
+    const showcaseDelay = process.argv.includes("--audit-actions") ? 25_000 : 500;
+    setTimeout(startActionShowcase, showcaseDelay);
   }
 });
 
@@ -118,7 +121,7 @@ app.on("window-all-closed", () => {
 });
 
 app.on("before-quit", () => {
-  stopMotionShowcase({ notifyRenderer: false });
+  stopActionShowcase({ notifyRenderer: false });
   microphoneAuthorized = false;
   textSpeechController?.abort("application_quit");
   void voice?.stop("application_quit");
@@ -189,8 +192,13 @@ function createPetWindow() {
     createPetWindowOptions(PET_PRELOAD_PATH),
   );
   installWindowNavigationGuards(window);
+  embodimentController.attach((command) => {
+    if (window.isDestroyed()) throw new Error("Embodiment window is closed.");
+    window.webContents.send("embodiment:command", command);
+  });
   window.webContents.on("context-menu", () => showPetMenu(window));
   window.on("closed", () => {
+    embodimentController.detach("window_closed");
     petWindow = null;
   });
   return window;
@@ -312,6 +320,11 @@ function installIpcHandlers() {
   ipcMain.on("pet:renderer-error", (event, message) => {
     if (!isPetSender(event) || typeof message !== "string") return;
     showError(new Error("Character renderer failed: " + message.slice(0, 500)));
+  });
+
+  ipcMain.on("embodiment:event", (event, payload) => {
+    if (!isPetSender(event)) return;
+    embodimentController.handleRendererEvent(payload);
   });
 
   ipcMain.on("pet:drag-start", (event, point) => {
@@ -547,10 +560,10 @@ function showPetMenu(window) {
       click: () => void interruptActiveWork("user_interruption"),
     },
     {
-      label: motionShowcaseTimer
-        ? "Stop motion showcase"
-        : `Preview all ${MOTION_SHOWCASE_FRAMES.length} motion states`,
-      click: motionShowcaseTimer ? stopMotionShowcase : startMotionShowcase,
+      label: actionShowcaseTimer
+        ? "Stop action showcase"
+        : `Preview all ${EMBODIMENT_ACTIONS.length} rigged 3D action clips`,
+      click: actionShowcaseTimer ? stopActionShowcase : startActionShowcase,
     },
     { type: "separator" },
     {
@@ -571,37 +584,37 @@ function showPetMenu(window) {
   menu.popup({ window });
 }
 
-function startMotionShowcase() {
-  stopMotionShowcase();
+function startActionShowcase() {
+  stopActionShowcase();
   hidePopover();
-  motionShowcaseIndex = 0;
+  actionShowcaseIndex = 0;
   const advance = () => {
     if (!petWindow || petWindow.isDestroyed()) {
-      stopMotionShowcase({ notifyRenderer: false });
+      stopActionShowcase({ notifyRenderer: false });
       return;
     }
-    const frame = MOTION_SHOWCASE_FRAMES[motionShowcaseIndex];
-    if (!frame) {
+    const action = EMBODIMENT_ACTIONS[actionShowcaseIndex];
+    if (!action) {
       console.info(
-        `[character] motion showcase completed: ${MOTION_SHOWCASE_FRAMES.length} states`,
+        `[embodiment] action showcase completed: ${EMBODIMENT_ACTIONS.length} clips`,
       );
-      stopMotionShowcase();
+      stopActionShowcase();
       return;
     }
-    petWindow.webContents.send("character:preview", frame);
-    motionShowcaseIndex += 1;
+    void embodimentController
+      .dispatch("play_action", { action, intensity: 1, interrupt: true })
+      .catch((error) => console.error(`[embodiment] ${error.message}`));
+    actionShowcaseIndex += 1;
+    actionShowcaseTimer = setTimeout(advance, 2_600);
   };
   advance();
-  motionShowcaseTimer = setInterval(advance, MOTION_SHOWCASE_INTERVAL_MS);
 }
 
-function stopMotionShowcase({ notifyRenderer = true } = {}) {
-  if (motionShowcaseTimer !== null) clearInterval(motionShowcaseTimer);
-  motionShowcaseTimer = null;
-  motionShowcaseIndex = 0;
-  if (notifyRenderer && petWindow && !petWindow.isDestroyed()) {
-    petWindow.webContents.send("character:preview", { type: "end" });
-  }
+function stopActionShowcase({ notifyRenderer = true } = {}) {
+  if (actionShowcaseTimer !== null) clearTimeout(actionShowcaseTimer);
+  actionShowcaseTimer = null;
+  actionShowcaseIndex = 0;
+  void notifyRenderer;
 }
 
 function showPromptPopover() {

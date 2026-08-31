@@ -30,6 +30,11 @@ weights.
 | Vite | 8.2.2 | MIT | Reproducible local renderer build |
 | marked | 18.0.11 | MIT | GFM parsing; output is never trusted directly |
 | DOMPurify | 3.4.14 | MPL-2.0 OR Apache-2.0 | Strict response HTML sanitization |
+| Three.js | 0.185.1 | MIT | Transparent 3D renderer and scene graph |
+| @pixiv/three-vrm | 3.5.5 | MIT | VRM 1.0 avatar runtime |
+| @pixiv/three-vrm-animation | 3.5.5 | MIT | VRMA loading and retargeting |
+| @modelcontextprotocol/sdk | 1.30.0 | MIT | Typed stdio embodiment authoring server |
+| Zod | 4.5.4 | MIT | MCP input validation |
 
 The lockfile is committed. npm reported zero known vulnerabilities after
 installation. Vite and Electron are development/runtime-host dependencies; the
@@ -45,6 +50,9 @@ terminal agent core still uses Node built-ins.
 | Pocket TTS runtime | 3.0.2 plus transitive lock | MIT | Exact Python package lock |
 | Pocket TTS English standard | revision d29db79 | CC-BY-4.0 | Revision-pinned by runtime config |
 | Peter Yearsley voice source | voice-zero catalog | CC0-1.0 | SHA-256 in assets/voice/manifest.json |
+| Blender | 5.2.1 LTS / 9e2066aef7ef | GPL-3.0-or-later | Official winget package; external authoring tool |
+| VRM format Blender extension | 4.5.0 | MIT AND GPL-3.0-or-later | Official extension SHA-256 `e5e0f923a0bb11eb1320870b2db8091948dd5b63014510d839016a112e40a35a` |
+| Original Taker GLB | deterministic recipe | LicenseRef-Taker-Project | SHA-256 in adjacent source manifest; no third-party assets |
 
 The voice installer downloads into the ignored .agent directory, verifies the full
 SHA-256 before extraction/use, and re-verifies cached artifacts. The renderer build

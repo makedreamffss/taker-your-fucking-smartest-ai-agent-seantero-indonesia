@@ -7,10 +7,15 @@ import { JsonlLogger } from "./infra/jsonl-logger.js";
 import { OllamaClient } from "./llm/ollama-client.js";
 import { createCommandTools } from "./tools/builtins/command-tools.js";
 import { createFilesystemTools } from "./tools/builtins/filesystem-tools.js";
+import { createEmbodimentTools } from "./tools/builtins/embodiment-tools.js";
+import { createEmbodimentAuthoringTools } from "./tools/builtins/embodiment-authoring-tools.js";
 import { PermissionPolicy } from "./tools/permission-policy.js";
 import { ToolRegistry } from "./tools/registry.js";
 
-export function createRuntime(config, { fetchImpl, logger } = {}) {
+export function createRuntime(
+  config,
+  { fetchImpl, logger, embodimentController } = {},
+) {
   const client = new OllamaClient({
     baseUrl: config.ollamaBaseUrl,
     model: config.model,
@@ -19,15 +24,18 @@ export function createRuntime(config, { fetchImpl, logger } = {}) {
   });
 
   const permissionPolicy = new PermissionPolicy({ mode: config.approvalMode });
-  const toolRegistry = new ToolRegistry({ permissionPolicy }).registerAll(
-    [
+  const tools = [
       ...createFilesystemTools({ workspace: config.workspace }),
       ...createCommandTools({
         workspace: config.workspace,
         defaultTimeoutMs: config.commandTimeoutMs,
       }),
-    ],
-  );
+      ...(embodimentController
+        ? createEmbodimentTools({ controller: embodimentController })
+        : []),
+      ...createEmbodimentAuthoringTools({ workspace: config.workspace }),
+    ];
+  const toolRegistry = new ToolRegistry({ permissionPolicy }).registerAll(tools);
   const conversation = new Conversation({
     systemPrompt: buildSystemPrompt({ workspace: config.workspace }),
     maxTurns: config.historyTurns,

@@ -21,14 +21,22 @@ contextBridge.exposeInMainWorld(
       ipcRenderer.on("character:event", listener);
       return () => ipcRenderer.removeListener("character:event", listener);
     },
-    onMotionPreview(callback) {
-      if (typeof callback !== "function") {
-        throw new TypeError("onMotionPreview requires a callback.");
-      }
-      const listener = (_event, payload) => callback(payload);
-      ipcRenderer.on("character:preview", listener);
-      return () => ipcRenderer.removeListener("character:preview", listener);
-    },
+    embodiment: Object.freeze({
+      onCommand(callback) {
+        if (typeof callback !== "function") {
+          throw new TypeError("embodiment.onCommand requires a callback.");
+        }
+        const listener = (_event, payload) => callback(payload);
+        ipcRenderer.on("embodiment:command", listener);
+        return () => ipcRenderer.removeListener("embodiment:command", listener);
+      },
+      reportEvent(event) {
+        if (!event || typeof event !== "object" || Array.isArray(event)) {
+          throw new TypeError("embodiment.reportEvent requires an object.");
+        }
+        ipcRenderer.send("embodiment:event", event);
+      },
+    }),
     drag: Object.freeze({
       start(screenX, screenY) {
         ipcRenderer.send("pet:drag-start", safePoint(screenX, screenY));

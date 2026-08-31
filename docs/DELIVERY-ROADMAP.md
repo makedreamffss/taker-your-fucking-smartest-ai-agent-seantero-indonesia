@@ -13,18 +13,21 @@ has tests and operator documentation.
 - approval and semi-autonomous policies plus Windows UAC
 - unlimited tool rounds with cancellation and operation timeouts
 
-## Gate 1 — interruption and pet shell: complete
+## Gate 1 — interruption and 3D embodiment shell: complete
 
 - one active turn owned by SessionController
 - abort propagation and truthful lifecycle events
 - independent service, turn, input-audio, and output-audio state
 - conflict-safe exact text editing with backup
-- transparent 124 by 124 blue pet with no visible window background
+- transparent 320 by 440 Blender-authored 3D embodiment with no visible background
 - sandboxed local renderer, CSP, narrow preload bridge, blocked navigation
+- coherent 19-joint hierarchy with independent pose, mood, action, gaze, and speech
+  tracks; 16 finite action clips captured by a deterministic visual audit
+- typed native and MCP scene/asset/Blender boundaries; no arbitrary Blender code
 
-Exit evidence: npm run check passes 42 tests; Chromium render capture confirms a
-transparent page and 114 by 114 pet. A live desktop prompt returned READY through
-the configured gpt-oss model.
+Exit evidence: 71 tests pass; Chromium runtime capture confirms transparent WebGL2,
+non-static frames, and the authored GLB. The action auditor captured all 16 named
+clips and produced a reviewed contact sheet.
 
 ## Gate 2 — audio capture, VAD, and STT: in progress
 

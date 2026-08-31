@@ -5,10 +5,10 @@ agent. It uses `gpt-oss:120b-cloud` through the local Ollama API as its reasonin
 engine while keeping the model, agent loop, tools, permissions, conversation, and
 interface separated.
 
-This milestone has both the terminal runtime and the first floating desktop shell.
-The shell is a transparent, monochrome pixel operator: no permanent panel, card, or
-visible window background. Capability is broad while authorization remains explicit
-and user-selectable.
+This milestone has both the terminal runtime and a floating 3D embodiment. The
+visible agent is one transparent, articulated, non-branded construct with no
+permanent panel or visible window background. Capability is broad while
+authorization remains explicit and user-selectable.
 
 ## What works now
 
@@ -31,10 +31,14 @@ and user-selectable.
   scripts when the exact prebuilt tool does not exist
 - Tool failures returned to the model so it can correct a request
 - Metadata-only JSONL event logs under `.agent/logs/`
-- A sandboxed Electron character shell with a transparent 188-by-188 window, no taskbar
+- A sandboxed Electron embodiment shell with a transparent 320-by-440 window, no taskbar
   entry, no Node.js in the renderer, a restrictive CSP, and blocked navigation
-- A GPU point-field character made from 12,544 independently displaced pixels,
-  12 composable moods, and 40 semantic motion families across six phases
+- A Three.js WebGL embodiment using one coherent 19-joint hierarchy, five independent
+  motion tracks, six moods, and 16 honest finite action clips including jump, roll,
+  dance, point, salute, think, wave, and work
+- A deterministic Blender 5.2 LTS authoring recipe, project-local GLB source/output,
+  asset provenance checks, recovery snapshots, VRM/VRMA adapters, and typed native
+  plus MCP authoring tools with no model-visible raw Blender Python endpoint
 - A compact graphite command surface with a visible Send control, Enter-to-send,
   Shift+Enter newlines, IME-safe keyboard handling, and no decorative HUD chrome
 - A sharp transient operator transcript with GFM Markdown parsed by Marked and
@@ -56,6 +60,8 @@ and user-selectable.
 - Node.js 20 or newer (Node 24 is already installed on this machine)
 - Ollama running locally
 - The `gpt-oss:120b-cloud` model available and Ollama signed in
+- Blender 5.2 LTS only when rebuilding/customizing the authored 3D asset (the
+  packaged GLB runs without Blender)
 
 Ollama's local server listens on `http://127.0.0.1:11434` by default. Cloud-model
 authentication is handled by the signed-in local Ollama installation.
@@ -70,13 +76,13 @@ npm run doctor
 npm start
 ```
 
-Launch the floating pet:
+Launch the floating embodiment:
 
 ```powershell
 npm run desktop
 ```
 
-Drag the character to move it. Right-click for approval controls, voice capture,
+Drag the embodiment to move it. Right-click for approval controls, voice capture,
 interruption, or quit. Double-click it to open the transient command surface. Install
 the verified local speech runtime once with `npm run voice:install`, then choose
 Start listening from the right-click menu. Replies to both typed and spoken prompts
@@ -121,6 +127,18 @@ The model receives structured tools for `inspect_path`, `list_directory`,
 `read_text_file`, `search_files`, `write_text_file`, `edit_text_file`,
 `create_directory`, `copy_path`, `move_path`, `delete_path`,
 `get_current_time`, and `execute_command`.
+
+When the desktop host is active it also receives `embodiment_inspect`,
+`embodiment_play_action`, `embodiment_set_mood`, `embodiment_look_at`, and
+`embodiment_set_presence`. Authoring tools list/inspect project assets, inspect
+Blender, and rebuild the starter GLB from the fixed recipe after approval and a
+recovery snapshot. The standalone stdio bridge runs with `npm run mcp:embodiment`.
+
+Rebuild the original starter asset with the installed Blender 5.2 LTS runtime:
+
+```powershell
+npm run build:embodiment
+```
 
 Paths may be relative to the workspace or absolute anywhere on the machine. The
 command tool can run arbitrary PowerShell, CMD, or Bash and can request

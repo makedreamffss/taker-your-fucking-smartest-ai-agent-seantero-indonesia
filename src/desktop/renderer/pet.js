@@ -1,18 +1,23 @@
 "use strict";
 
 import { createMicrophoneVad } from "./voice-capture.js";
-import { PixelCharacterRenderer } from "./pixel-character-renderer.js";
+import { EmbodimentRenderer } from "./embodiment-renderer.js";
 import { VoicePlayback } from "./voice-playback.js";
 
 const pet = document.getElementById("pet");
-const motionProgress = document.getElementById("motion-progress");
-const renderer = new PixelCharacterRenderer({
-  canvas: document.getElementById("character"),
-  fallback: document.getElementById("character-fallback"),
+const renderer = new EmbodimentRenderer({
+  canvas: document.getElementById("embodiment"),
+  reportEvent(event) {
+    window.taker.embodiment.reportEvent(event);
+  },
 });
-void renderer.start().catch((error) => {
+
+try {
+  renderer.start();
+} catch (error) {
   window.taker.reportRendererError(error?.message || String(error));
-});
+}
+
 const KNOWN_STATES = new Set([
   "idle",
   "starting",
@@ -28,33 +33,18 @@ const KNOWN_STATES = new Set([
 window.taker.onActivityState((event) => {
   const state = KNOWN_STATES.has(event?.uiState) ? event.uiState : "error";
   pet.dataset.state = state;
-  pet.setAttribute("aria-label", "Taker Takeover is " + describe(state));
+  pet.setAttribute("aria-label", `Taker 3D embodiment is ${describe(state)}`);
   renderer.handleActivity(event);
 });
-
-window.taker.onCharacterEvent((event) => renderer.handleEvent(event));
-window.taker.onMotionPreview((preview) => {
-  if (preview?.type === "end") {
-    motionProgress.hidden = true;
-    motionProgress.textContent = "";
-    renderer.endPreview();
-    return;
+window.taker.onCharacterEvent((event) => {
+  if (event?.type === "turn_completed") {
+    renderer.handleCommand({
+      type: "play_action",
+      payload: { action: "acknowledge", intensity: 0.62, interrupt: false },
+    });
   }
-  if (
-    preview?.type !== "state" ||
-    typeof preview.name !== "string" ||
-    !Number.isSafeInteger(preview.index) ||
-    !Number.isSafeInteger(preview.total) ||
-    preview.index < 0 ||
-    preview.total < 1 ||
-    preview.index >= preview.total ||
-    !renderer.preview(preview.name)
-  ) {
-    return;
-  }
-  motionProgress.textContent = `${preview.index + 1}/${preview.total}  ${preview.name}`;
-  motionProgress.hidden = false;
 });
+window.taker.embodiment.onCommand((command) => renderer.handleCommand(command));
 window.addEventListener("resize", () => renderer.resize());
 window.addEventListener("beforeunload", () => renderer.destroy());
 
@@ -114,7 +104,6 @@ pet.addEventListener("pointermove", (event) => {
 pet.addEventListener("pointerup", finishPointerInteraction);
 pet.addEventListener("pointercancel", finishPointerInteraction);
 pet.addEventListener("lostpointercapture", finishPointerInteraction);
-
 pet.addEventListener("dblclick", () => {
   if (performance.now() >= suppressActivationUntil) window.taker.activate();
 });

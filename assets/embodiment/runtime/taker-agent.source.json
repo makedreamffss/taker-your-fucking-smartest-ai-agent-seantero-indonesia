@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "generator": "Blender 5.2.1 LTS deterministic project recipe",
+  "sourceScript": "scripts/blender/build_taker_embodiment.py",
+  "output": "assets/embodiment/runtime/taker-agent.glb",
+  "sha256": "1ac40419e1314989f67d0e2d73b032e4b5466978443b9763aa13540021b0d79e",
+  "license": "LicenseRef-Taker-Project",
+  "requiredJoints": [
+    "root",
+    "pelvis",
+    "spine",
+    "chest",
+    "collar",
+    "neck",
+    "head",
+    "leftShoulder",
+    "leftElbow",
+    "leftHand",
+    "rightShoulder",
+    "rightElbow",
+    "rightHand",
+    "leftHip",
+    "leftKnee",
+    "leftFoot",
+    "rightHip",
+    "rightKnee",
+    "rightFoot"
+  ],
+  "thirdPartyAssets": []
+}

@@ -1,6 +1,6 @@
 export const PET_WINDOW_SIZE = Object.freeze({
-  width: 188,
-  height: 188,
+  width: 320,
+  height: 440,
   edgeInset: 18,
 });
 

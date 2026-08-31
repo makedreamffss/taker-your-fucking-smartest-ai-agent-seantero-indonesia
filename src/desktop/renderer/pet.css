@@ -21,100 +21,52 @@ body {
   place-items: center;
 }
 
-[hidden] {
-  display: none !important;
-}
-
 .pet {
   position: relative;
-  width: 176px;
-  height: 176px;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   background: transparent;
-  -webkit-app-region: no-drag;
   cursor: pointer;
-  touch-action: none;
   outline: none;
+  touch-action: none;
+  -webkit-app-region: no-drag;
 }
 
-.character {
-  position: absolute;
-  inset: 0;
+.embodiment {
+  display: block;
   width: 100%;
   height: 100%;
   pointer-events: none;
-  filter: drop-shadow(0 10px 12px rgb(0 0 0 / 58%));
+  filter: drop-shadow(0 18px 16px rgb(0 0 0 / 52%));
 }
 
-.character--fallback {
-  object-fit: contain;
-  padding: 9px;
-  animation: fallback-breathe 4.8s ease-in-out infinite;
-}
-
-.sensor-line {
+.pet:focus-visible::after,
+.pet[data-state="waiting_approval"]::after,
+.pet[data-state="listening"]::after {
   position: absolute;
-  top: 50%;
-  width: 18px;
-  height: 1px;
+  inset: 10% 15%;
+  border: 1px solid rgb(92 234 255 / 24%);
+  border-radius: 50%;
+  content: "";
   pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgb(108 237 255 / 45%));
-  opacity: 0;
+  animation: presence-pulse 1.8s ease-out infinite;
 }
 
-.sensor-line--left {
-  left: 2px;
-}
-
-.sensor-line--right {
-  right: 2px;
-  transform: rotate(180deg);
-}
-
-.motion-progress {
-  position: absolute;
-  z-index: 2;
-  bottom: 2px;
-  left: 50%;
-  width: 170px;
-  overflow: hidden;
-  color: rgb(220 230 234 / 92%);
-  font: 600 8px/1.25 "Cascadia Mono", Consolas, monospace;
-  letter-spacing: 0.01em;
-  text-align: center;
-  text-overflow: ellipsis;
-  text-shadow: 0 1px 4px rgb(0 0 0 / 100%);
-  white-space: nowrap;
-  pointer-events: none;
-  transform: translateX(-50%);
-}
-
-.pet:focus-visible .sensor-line,
-.pet[data-state="waiting_approval"] .sensor-line,
-.pet[data-state="listening"] .sensor-line {
-  opacity: 1;
-  animation: sensor-sweep 1.2s steps(6, end) infinite;
-}
-
-.pet[data-state="error"] .character {
+.pet[data-state="error"] .embodiment {
   filter:
-    drop-shadow(3px 0 2px rgb(255 40 62 / 36%))
-    drop-shadow(-2px 0 2px rgb(82 218 255 / 28%));
+    drop-shadow(3px 0 3px rgb(255 40 72 / 42%))
+    drop-shadow(-2px 0 3px rgb(63 221 255 / 34%));
 }
 
-@keyframes sensor-sweep {
-  0%, 100% { transform: scaleX(0.25); opacity: 0.18; }
-  45% { transform: scaleX(1); opacity: 0.76; }
-}
-
-@keyframes fallback-breathe {
-  0%, 100% { transform: translateY(1px); opacity: 0.92; }
-  50% { transform: translateY(-2px); opacity: 1; }
+@keyframes presence-pulse {
+  0% { opacity: 0; transform: scale(0.7); }
+  35% { opacity: 0.8; }
+  100% { opacity: 0; transform: scale(1.08); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sensor-line,
-  .character--fallback {
-    animation-duration: 8s;
+  .pet::after {
+    animation-duration: 6s;
   }
 }

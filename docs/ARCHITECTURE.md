@@ -5,7 +5,7 @@
 ```text
 Terminal / transient text popover / VAD speech segment
   -> SessionController
-     -> ActivityStateStore -> transparent pet renderer
+     -> ActivityStateStore -> transparent 3D embodiment renderer
      -> VoiceOrchestrator
         -> local Silero VAD in sandboxed Chromium
         -> cancellable whisper.cpp subprocess
@@ -57,15 +57,19 @@ the process.
   grants microphone permission only after the native Start listening action.
 - `src/desktop/preload.cjs` exposes narrow state and validated voice channels.
   It never exposes raw Electron IPC or filesystem/command primitives.
-- `src/desktop/renderer/` contains the sandboxed, Node-free pet, local Silero
-  VAD capture path, WebGL2 pixel-field character, Web Audio playback, and transient
-  popover renderer.
-- `src/desktop/renderer/character-motion-catalog.js` defines 40 semantic motion
-  families across six phases (240 addressable states) and 12 orthogonal moods. The
-  states are procedural choreography parameters, not hand-authored sprite clips.
-- `src/desktop/renderer/pixel-character-renderer.js` samples the transparent anchor
-  into 12,544 GPU points and deforms eye, jaw, crown, edge, scan, and glitch regions
-  without using pre-rendered animation swaps.
+- `src/desktop/renderer/` contains the sandboxed, Node-free Three.js embodiment,
+  local Silero VAD capture path, Web Audio playback, and transient popover renderer.
+- `src/desktop/renderer/motion-system.js` layers base pose, mood, finite action,
+  gaze, and speech energy on one coherent named joint hierarchy. Sixteen advertised
+  actions have sixteen distinct finite definitions; background states are not
+  counted as extra clips.
+- `src/desktop/renderer/gltf-rig-adapter.js` loads the Blender-authored original GLB;
+  `vrm-avatar-adapter.js` is the VRM 1.0/VRMA standards boundary. The procedural rig
+  is a crash-safe fallback, not the default asset.
+- `src/embodiment/embodiment-controller.js` validates main-to-renderer commands,
+  awaits bounded acceptance, and exposes status to typed agent tools.
+- `src/mcp/embodiment-server.js` exposes a stdio asset/Blender authoring service with
+  schemas, workspace allowlists, snapshots, fixed recipes, and no arbitrary code.
 - `src/desktop/renderer-audio-player.js` is the bounded request/acknowledgement
   bridge between neural synthesis and sandboxed Web Audio playback.
 - `src/desktop/renderer/prompt-interaction.js` owns testable Enter/Shift+Enter and
@@ -90,8 +94,8 @@ Electron main process
   - SessionController and model/tool orchestration
   - approval coordinator
   |
-  +-- sandboxed character renderer
-  |     - GPU pixel expressions, semantic action motion, and user activation
+  +-- sandboxed embodiment renderer
+  |     - Three.js/glTF rig, semantic layered motion, and user activation
   |     - Chromium audio processing and local Silero VAD
   |     - Web Audio playback and waveform-energy animation
   |     - no Node.js or arbitrary IPC
@@ -106,7 +110,7 @@ Electron main process
         - crash isolation and bounded queues
 ```
 
-The character window is 188 by 188 pixels, transparent, frameless, draggable,
+The embodiment window is 320 by 440 pixels, transparent, frameless, draggable,
 always-on-top, and absent from the taskbar. Normal use shows the pet only. Larger
 surfaces are separate short-lived windows so invisible transparent areas never
 intercept desktop clicks.
@@ -141,7 +145,7 @@ intercept desktop clicks.
     allowlist. The renderer inserts a sanitized document fragment and never assigns
     model content to `innerHTML`.
 12. Synthesized speech is bounded before IPC, acknowledged by id, interruptible from
-    the renderer, and coupled to real waveform energy for character movement.
+    the renderer, and coupled to real waveform energy on the speech animation track.
 
 ## Gated roadmap
 

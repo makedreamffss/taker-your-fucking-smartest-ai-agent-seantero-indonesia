@@ -11,14 +11,16 @@
   "scripts": {
     "start": "node src/cli.js",
     "build:renderer": "node scripts/build-renderer.mjs",
+    "build:embodiment": "node scripts/build-embodiment.mjs",
     "desktop": "npm run build:renderer && electron src/desktop/main.js",
+    "mcp:embodiment": "node src/mcp/embodiment-server.js",
     "doctor": "node src/cli.js --doctor",
     "voice:install": "pwsh -NoProfile -File scripts/install-voice-runtime.ps1",
     "voice:benchmark": "node scripts/benchmark-stt.mjs",
     "voice:benchmark-tts": ".agent\\runtime\\voice\\pocket-tts-3.0.2\\Scripts\\python.exe scripts/benchmark-pocket-tts.py --output .agent/benchmarks/pocket-tts",
     "voice:smoke-tts": "node scripts/smoke-pocket-tts.mjs",
-    "character:smoke": "node scripts/smoke-character-render.mjs",
-    "character:capture-showcase": "node scripts/capture-motion-showcase.mjs",
+    "embodiment:smoke": "node scripts/smoke-character-render.mjs",
+    "embodiment:capture-actions": "node scripts/capture-action-audit.mjs",
     "desktop:capture": "node scripts/capture-desktop-ui.mjs",
     "voice:smoke-vad": "npm run build:renderer && electron scripts/smoke-vad-runtime.mjs",
     "test": "node --test",
@@ -29,9 +31,14 @@
     "vite": "8.2.2"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "@pixiv/three-vrm": "3.5.5",
+    "@pixiv/three-vrm-animation": "3.5.5",
     "@ricky0123/vad-web": "0.0.30",
     "dompurify": "3.4.14",
     "marked": "18.0.11",
-    "onnxruntime-web": "1.29.0"
+    "onnxruntime-web": "1.29.0",
+    "three": "0.185.1",
+    "zod": "4.5.4"
   }
 }

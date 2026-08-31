@@ -11,7 +11,7 @@ machine constraints so implementation does not drift toward guesswork.
 - Approximately 8 GB RAM and Intel integrated graphics
 - Node.js 24.11.1, npm 11.6.2, PowerShell 7.6.4, Python 3.13.5, Rust 1.88
 - Working microphone array and speakers; one 1536 by 864 display
-- No NVIDIA GPU, ffmpeg, Tesseract, or .NET runtime currently installed
+- No NVIDIA GPU, ffmpeg, or Tesseract; Blender 5.2.1 LTS is installed for authoring
 - Ollama 0.33.2 is installed and gpt-oss:120b-cloud is available
 
 This rules out an architecture that keeps several large neural models resident or
@@ -47,9 +47,15 @@ Required controls are based on Electron's official security checklist:
 - a narrow preload API; never expose raw IPC
 - later packaged builds will enable Electron fuses and ASAR integrity
 
-The character is a transparent, frameless, always-on-top 188 by 188 window. It has
-no visible background and no permanent control surface. Native menus and future
-separate short-lived popovers keep the idle footprint to the pet alone.
+The embodiment is a transparent, frameless, always-on-top 320 by 440 window. It has
+no visible background and no permanent control surface. Native menus and separate
+short-lived popovers keep the idle footprint to the articulated model alone. The
+replaced pixel/skull experiments are retained only in git history.
+
+The current renderer and authoring decision is recorded in
+[EMBODIMENT-3D-ARCHITECTURE.md](EMBODIMENT-3D-ARCHITECTURE.md). It uses Three.js,
+glTF/VRM/VRMA, a deterministic Blender recipe, and semantic pose/mood/action/gaze/
+speech tracks. The 16-clip audit captures every named action and fails on omissions.
 
 Sources:
 

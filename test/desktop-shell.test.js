@@ -9,7 +9,7 @@ import {
   PET_WINDOW_SIZE,
 } from "../src/desktop/window-policy.js";
 
-test("pet shell is transparent, tiny, and renderer-isolated", () => {
+test("embodiment shell is transparent, bounded, and renderer-isolated", () => {
   const options = createPetWindowOptions("C:\\project\\preload.cjs");
 
   assert.equal(options.transparent, true);
@@ -17,8 +17,8 @@ test("pet shell is transparent, tiny, and renderer-isolated", () => {
   assert.equal(options.frame, false);
   assert.equal(options.alwaysOnTop, true);
   assert.equal(options.skipTaskbar, true);
-  assert.ok(options.width <= 200);
-  assert.ok(options.height <= 200);
+  assert.ok(options.width <= 400);
+  assert.ok(options.height <= 500);
   assert.equal(options.width, PET_WINDOW_SIZE.width);
   assert.equal(options.webPreferences.nodeIntegration, false);
   assert.equal(options.webPreferences.contextIsolation, true);
@@ -59,6 +59,8 @@ test("renderer has a restrictive content security policy and transparent page", 
   assert.match(html, /script-src 'self'/);
   assert.doesNotMatch(html, /\b(?:src|href)=["']https?:\/\//);
   assert.match(css, /background: transparent/);
+  assert.match(html, /id="embodiment"/);
+  assert.doesNotMatch(html, /skull|character-fallback|motion-progress/i);
   assert.match(css, /\.pet\s*\{[^}]*-webkit-app-region: no-drag/s);
   assert.doesNotMatch(css, /\.pet\s*\{[^}]*-webkit-app-region: drag/s);
 });
